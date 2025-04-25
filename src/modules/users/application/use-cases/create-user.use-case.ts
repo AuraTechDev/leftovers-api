@@ -7,6 +7,7 @@ export class CreateUserUseCase {
   constructor(private readonly usersService: UsersService) {}
 
   async execute(name: string, email: string, password: string): Promise<User> {
-    return await this.usersService.createUser(name, email, password);
+    const userData = { name, email, password };
+    return await this.usersService.createUser(userData);
   }
 }
