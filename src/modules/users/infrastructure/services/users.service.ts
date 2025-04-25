@@ -8,11 +8,12 @@ import { v4 as uuidv4 } from 'uuid';
 export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
-    const { name, email, password } = createUserDto;
+  async createUser(userData: CreateUserDto): Promise<User> {
+    const { name, email, password } = userData;
 
     // Check if user already exists
     const existingUser = await this.usersRepository.findByEmail(email);
+
     if (existingUser) {
       throw new Error('User with this email already exists');
     }
