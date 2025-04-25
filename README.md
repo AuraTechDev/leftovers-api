@@ -68,13 +68,13 @@ PORT=3000
 
 ```bash
 # Development mode
-$ pnpm run start:dev
+$ pnpm start:dev
 
 # Production mode
-$ pnpm run start:prod
+$ pnpm start:prod
 
 # Build the application
-$ pnpm run build
+$ pnpm build
 ```
 
 ## API Documentation
@@ -89,13 +89,13 @@ http://localhost:3000/api/docs
 
 ```bash
 # Unit tests
-$ pnpm run test
+$ pnpm test
 
 # e2e tests
-$ pnpm run test:e2e
+$ pnpm test:e2e
 
 # Test coverage
-$ pnpm run test:cov
+$ pnpm test:cov
 ```
 
 ## Docker Support
