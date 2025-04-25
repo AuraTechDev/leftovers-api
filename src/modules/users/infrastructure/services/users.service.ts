@@ -1,23 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../repositories/users.repository';
 import { User } from '../../domain/entities/user.entity';
+import { CreateUserDto } from '../../application/dtos/create-user.dto';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  async createUser(
-    name: string,
-    email: string,
-    password: string,
-  ): Promise<User> {
-    const existingUser = await this.usersRepository.findByEmail(email);
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
+    const { name, email, password } = createUserDto;
 
+    // Check if user already exists
+    const existingUser = await this.usersRepository.findByEmail(email);
     if (existingUser) {
       throw new Error('User with this email already exists');
     }
 
+    // Create new user
     const user = new User({
       id: uuidv4(),
       name,

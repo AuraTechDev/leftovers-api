@@ -9,17 +9,15 @@ import {
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { User } from '../../domain/entities/user.entity';
+import { CreateUserDto } from '../../application/dtos/create-user.dto';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  async createUser(
-    @Body() createUserDto: { name: string; email: string; password: string },
-  ): Promise<User> {
-    const { name, email, password } = createUserDto;
-    return this.usersService.createUser(name, email, password);
+  async createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
+    return this.usersService.createUser(createUserDto);
   }
 
   @Get(':id')
