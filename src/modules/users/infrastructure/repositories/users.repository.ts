@@ -1,37 +1,74 @@
 import { Injectable } from '@nestjs/common';
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { User } from '../../domain/entities/user.entity';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class UsersRepository implements IUserRepository {
-  private users: User[] = [];
+  constructor(private readonly prisma: PrismaService) {}
 
-  create(user: User): Promise<User> {
-    this.users.push(user);
-    return Promise.resolve(user);
+  async create(user: User): Promise<User> {
+    const createdUser = await this.prisma.user.create({
+      data: {
+        email: user.email,
+        name: user.name,
+      },
+    });
+
+    return new User({
+      id: createdUser.id.toString(),
+      email: createdUser.email,
+      name: createdUser.name,
+    });
   }
 
-  findById(id: string): Promise<User | null> {
-    return Promise.resolve(this.users.find((user) => user.id === id) || null);
+  async findById(id: string): Promise<User | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!user) return null;
+
+    return new User({
+      id: user.id.toString(),
+      email: user.email,
+      name: user.name,
+    });
   }
 
-  findByEmail(email: string): Promise<User | null> {
-    return Promise.resolve(
-      this.users.find((user) => user.email === email) || null,
-    );
+  async findByEmail(email: string): Promise<User | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) return null;
+
+    return new User({
+      id: user.id.toString(),
+      email: user.email,
+      name: user.name,
+    });
   }
 
-  update(id: string, userData: Partial<User>): Promise<User> {
-    const userIndex = this.users.findIndex((user) => user.id === id);
-    if (userIndex === -1) {
-      throw new Error('User not found');
-    }
-    this.users[userIndex] = { ...this.users[userIndex], ...userData };
-    return Promise.resolve(this.users[userIndex]);
+  async update(id: string, userData: Partial<User>): Promise<User> {
+    const updatedUser = await this.prisma.user.update({
+      where: { id: parseInt(id) },
+      data: {
+        email: userData.email,
+        name: userData.name,
+      },
+    });
+
+    return new User({
+      id: updatedUser.id.toString(),
+      email: updatedUser.email,
+      name: updatedUser.name,
+    });
   }
 
-  delete(id: string): Promise<void> {
-    this.users = this.users.filter((user) => user.id !== id);
-    return Promise.resolve();
+  async delete(id: string): Promise<void> {
+    await this.prisma.user.delete({
+      where: { id: parseInt(id) },
+    });
   }
 }
