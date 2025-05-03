@@ -38,7 +38,6 @@ export class AuthService {
   }
 
   async validateOAuthUser(oauthData: OAuthLoginDto): Promise<User> {
-    // Buscar si ya existe un usuario con ese email y proveedor
     let user = await this.prisma.user.findFirst({
       where: {
         provider: oauthData.provider,
@@ -46,7 +45,6 @@ export class AuthService {
       },
     });
 
-    // Si no existe, crear uno nuevo
     if (!user) {
       user = await this.prisma.user.create({
         data: {
@@ -55,12 +53,11 @@ export class AuthService {
           photoUrl: oauthData.photoUrl,
           provider: oauthData.provider,
           providerId: oauthData.providerId,
-          role: Role.USER, // Por defecto, los usuarios de OAuth son usuarios regulares
+          role: Role.USER,
         },
       });
     }
 
-    // Actualizar la información del usuario si ha cambiado
     if (user.name !== oauthData.name || user.photoUrl !== oauthData.photoUrl) {
       user = await this.prisma.user.update({
         where: { id: user.id },
@@ -95,7 +92,6 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    // Verificar si el usuario ya existe
     const existingUser = await this.prisma.user.findUnique({
       where: { email: registerDto.email },
     });
@@ -104,10 +100,8 @@ export class AuthService {
       throw new UnauthorizedException('El email ya está registrado');
     }
 
-    // Hash de contraseña
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    // Crear nuevo usuario
     const user = await this.prisma.user.create({
       data: {
         email: registerDto.email,
@@ -118,11 +112,9 @@ export class AuthService {
       },
     });
 
-    // Eliminar la contraseña del objeto de respuesta
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = user;
 
-    // Generar token
     const payload = {
       sub: result.id,
       email: result.email,
