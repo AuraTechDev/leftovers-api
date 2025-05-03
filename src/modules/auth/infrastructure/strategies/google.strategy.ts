@@ -5,8 +5,22 @@ import { env } from '../../../../config/env.config';
 import { AuthService } from '../../application/services/auth.service';
 import { Provider } from '@prisma/client';
 
+// Define interface for Google profile
+interface GoogleProfile {
+  id: string;
+  name: {
+    givenName: string;
+    familyName: string;
+  };
+  emails: Array<{ value: string }>;
+  photos?: Array<{ value: string }>;
+}
+
 @Injectable()
-export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
+export class GoogleStrategy extends PassportStrategy(
+  Strategy as any,
+  'google',
+) {
   constructor(private authService: AuthService) {
     super({
       clientID: env.GOOGLE_CLIENT_ID,
@@ -19,7 +33,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     accessToken: string,
     refreshToken: string,
-    profile: any,
+    profile: GoogleProfile,
     done: VerifyCallback,
   ) {
     const { id, name, emails, photos } = profile;
@@ -29,7 +43,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       providerId: id,
       email: emails[0].value,
       name: name.givenName + ' ' + name.familyName,
-      photoUrl: photos[0]?.value,
+      photoUrl: photos?.[0]?.value,
     });
 
     done(null, user);
