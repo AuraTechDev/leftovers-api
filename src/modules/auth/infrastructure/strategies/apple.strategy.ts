@@ -23,8 +23,8 @@ export class AppleStrategy extends PassportStrategy(Strategy as any, 'apple') {
       clientID: env.APPLE_CLIENT_ID,
       teamID: env.APPLE_CLIENT_SECRET,
       callbackURL: 'http://localhost:3000/auth/apple/callback',
-      keyID: 'your_key_id', // Necesitarás configurar esto
-      privateKeyLocation: 'path/to/key', // Necesitarás configurar esto
+      keyID: 'your_key_id',
+      privateKeyLocation: 'path/to/key',
       passReqToCallback: true,
       scope: ['name', 'email'],
     });
@@ -39,11 +39,11 @@ export class AppleStrategy extends PassportStrategy(Strategy as any, 'apple') {
     done: (error: Error | null, user?: any) => void,
   ): Promise<void> {
     try {
-      // Apple proporciona información limitada, principalmente el ID
+      // Apple provides limited information, mainly the ID
       const appleUserId = profile.id;
 
-      // Nota: Apple no proporciona consistentemente email y nombre en cada solicitud,
-      // solo en la primera autorización, por lo que habría que manejar eso a nivel de frontend
+      // Note: Apple doesn't consistently provide email and name in every request,
+      // only in the first authorization, so this should be handled at frontend level
       const email = profile.email || `${appleUserId}@apple.user`;
 
       let name = `Apple User ${appleUserId.substring(0, 5)}`;

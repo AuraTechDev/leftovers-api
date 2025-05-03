@@ -26,7 +26,7 @@ export class AuthController {
     return this.authService.login(req.user);
   }
 
-  // Rutas para gestión de usuarios (solo para administradores)
+  // User management routes (admin only)
   @Get('admin')
   @Roles(Role.SUPER_ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -41,11 +41,11 @@ export class AuthController {
     return { message: 'Solo disponible para business y super admin' };
   }
 
-  // Rutas de OAuth
+  // OAuth routes
   @Get('google')
   @UseGuards(AuthGuard('google'))
   googleAuth() {
-    // El flujo de autenticación se maneja en la estrategia
+    // Authentication flow is handled in the strategy
   }
 
   @Get('google/callback')
@@ -57,7 +57,7 @@ export class AuthController {
   @Get('apple')
   @UseGuards(AuthGuard('apple'))
   appleAuth() {
-    // El flujo de autenticación se maneja en la estrategia
+    // Authentication flow is handled in the strategy
   }
 
   @Get('apple/callback')
