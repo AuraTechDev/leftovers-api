@@ -6,6 +6,16 @@ const envSchema = z.object({
     .default('development'),
   PORT: z.coerce.number().default(3000),
   DATABASE_URL: z.string().url(),
+
+  // Auth
+  JWT_SECRET: z.string().min(1),
+  JWT_EXPIRES_IN: z.string().default('1d'),
+
+  // OAuth
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  APPLE_CLIENT_ID: z.string().optional(),
+  APPLE_CLIENT_SECRET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
