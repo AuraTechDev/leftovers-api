@@ -5,6 +5,11 @@ import { RegisterDto } from '../dto/register.dto';
 import { Roles } from '../decorators/roles.decorator';
 import { RolesGuard } from '../guards/roles.guard';
 import { Role } from '@prisma/client';
+import { AuthUser } from '../../domain/interfaces/user.interface';
+
+interface RequestWithUser extends Request {
+  user: AuthUser;
+}
 
 @Controller('auth')
 export class AuthController {
@@ -17,7 +22,7 @@ export class AuthController {
 
   @Post('login')
   @UseGuards(AuthGuard('local'))
-  login(@Req() req: any) {
+  login(@Req() req: RequestWithUser) {
     return this.authService.login(req.user);
   }
 
@@ -45,7 +50,7 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  googleAuthCallback(@Req() req: any) {
+  googleAuthCallback(@Req() req: RequestWithUser) {
     return this.authService.login(req.user);
   }
 
@@ -57,13 +62,13 @@ export class AuthController {
 
   @Get('apple/callback')
   @UseGuards(AuthGuard('apple'))
-  appleAuthCallback(@Req() req: any) {
+  appleAuthCallback(@Req() req: RequestWithUser) {
     return this.authService.login(req.user);
   }
 
   @Get('profile')
   @UseGuards(AuthGuard('jwt'))
-  getProfile(@Req() req: any) {
+  getProfile(@Req() req: RequestWithUser) {
     return req.user;
   }
 }
