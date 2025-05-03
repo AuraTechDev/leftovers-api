@@ -22,5 +22,5 @@ export class RegisterDto {
   password: string;
 
   @IsEnum(Role)
-  role?: Role; // Opcional, por defecto será USER en el schema
+  role?: Role; // Optional, defaults to USER in the schema
 }

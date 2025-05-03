@@ -28,6 +28,7 @@ export class AuthService {
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
+
     if (!isPasswordValid) {
       return null;
     }
@@ -101,7 +102,6 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-
     const user = await this.prisma.user.create({
       data: {
         email: registerDto.email,
@@ -114,7 +114,6 @@ export class AuthService {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...result } = user;
-
     const payload = {
       sub: result.id,
       email: result.email,
