@@ -56,14 +56,16 @@ $ pnpm prisma migrate dev
 
 ## Configuration
 
-Create a `.env` file in the root directory with the following variables:
+Copy the `.env.example` file to create your own `.env` file and update the values according to your environment:
 
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/leftovers
-JWT_SECRET=your_jwt_secret
-PORT=3000
+```bash
+# Create your .env file from the example
+cp .env.example .env
+
+# Edit the .env file with your configuration values
 ```
 
+Make sure to set all required environment variables before running the application.
 
 ## Running the DB Container
 
@@ -72,7 +74,6 @@ PORT=3000
 $ docker-compose --env-file env_file_path up -d
 
 ```
-
 
 ## Running the Application
 
