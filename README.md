@@ -64,6 +64,16 @@ JWT_SECRET=your_jwt_secret
 PORT=3000
 ```
 
+
+## Running the DB Container
+
+```bash
+# Development mode
+$ docker-compose --env-file env_file_path up -d
+
+```
+
+
 ## Running the Application
 
 ```bash
