@@ -57,7 +57,7 @@ $ pnpm prisma migrate dev
 ## Running the DB Container
 
 ```bash
-# Development mode
+# Build and run with Docker
 $ docker-compose --env-file env_file_path up -d
 
 ```
@@ -94,13 +94,6 @@ $ pnpm test:e2e
 
 # Test coverage
 $ pnpm test:cov
-```
-
-## Docker Support
-
-```bash
-# Build and run with Docker
-$ docker-compose up -d
 ```
 
 ## Contributing
