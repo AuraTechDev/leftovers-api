@@ -14,9 +14,26 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  name       String
+  password   String? // Nullable because OAuth users won't have a password
+  photoUrl   String? // Profile picture URL for OAuth users
+  role       Role     @default(USER)
+  provider   Provider @default(LOCAL)
+  providerId String? // External ID for OAuth users
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+enum Role {
+  SUPER_ADMIN
+  BUSINESS
+  USER
+}
+
+enum Provider {
+  LOCAL
+  GOOGLE
+  APPLE
 }

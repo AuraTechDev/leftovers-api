@@ -19,6 +19,7 @@ const config: Config = {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
+  setupFiles: ['<rootDir>/../jest-setup.ts'],
   coveragePathIgnorePatterns: [
     'node_modules',
     'dist',
