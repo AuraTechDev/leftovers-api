@@ -32,6 +32,16 @@ describe('AuthService', () => {
     updatedAt: new Date(),
   };
 
+  const mockRefreshToken = {
+    id: 1,
+    token: 'test-refresh-token',
+    userId: 1,
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    user: mockUser,
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -44,6 +54,11 @@ describe('AuthService', () => {
               findFirst: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
+            },
+            refreshToken: {
+              create: jest.fn(),
+              findUnique: jest.fn(),
+              delete: jest.fn(),
             },
           },
         },
@@ -212,7 +227,7 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('should return user and token', () => {
+    it('should return user, access token and refresh token', async () => {
       const authUser: AuthUser = {
         id: 1,
         email: 'test@example.com',
@@ -222,7 +237,13 @@ describe('AuthService', () => {
         provider: Provider.LOCAL,
       };
 
-      const result = authService.login(authUser);
+      const createRefreshTokenSpy = jest.spyOn(
+        prismaService.refreshToken,
+        'create',
+      );
+      createRefreshTokenSpy.mockResolvedValue(mockRefreshToken);
+
+      const result = await authService.login(authUser);
 
       const signSpy = jest.spyOn(jwtService, 'sign');
       expect(signSpy).toHaveBeenCalledWith({
@@ -233,6 +254,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         user: authUser,
         accessToken: 'test-token',
+        refreshToken: mockRefreshToken.token,
       });
     });
   });
@@ -244,7 +266,7 @@ describe('AuthService', () => {
       password: 'password123',
     };
 
-    it('should register a new user and return token', async () => {
+    it('should register a new user and return tokens', async () => {
       const createdUser: User = {
         ...mockUser,
         email: registerDto.email,
@@ -256,6 +278,12 @@ describe('AuthService', () => {
 
       const createSpy = jest.spyOn(prismaService.user, 'create');
       createSpy.mockResolvedValue(createdUser);
+
+      const createRefreshTokenSpy = jest.spyOn(
+        prismaService.refreshToken,
+        'create',
+      );
+      createRefreshTokenSpy.mockResolvedValue(mockRefreshToken);
 
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
 
@@ -280,6 +308,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         user: expectedUser,
         accessToken: 'test-token',
+        refreshToken: mockRefreshToken.token,
       });
     });
 
@@ -290,6 +319,84 @@ describe('AuthService', () => {
       await expect(authService.register(registerDto)).rejects.toThrow(
         new UnauthorizedException('El email ya está registrado'),
       );
+    });
+  });
+
+  describe('refreshTokens', () => {
+    it('should return new access and refresh tokens when valid', async () => {
+      const findUniqueSpy = jest.spyOn(
+        prismaService.refreshToken,
+        'findUnique',
+      );
+      findUniqueSpy.mockResolvedValue(mockRefreshToken);
+
+      const deleteSpy = jest.spyOn(prismaService.refreshToken, 'delete');
+      deleteSpy.mockResolvedValue(mockRefreshToken);
+
+      const createRefreshTokenSpy = jest.spyOn(
+        prismaService.refreshToken,
+        'create',
+      );
+      createRefreshTokenSpy.mockResolvedValue({
+        ...mockRefreshToken,
+        token: 'new-refresh-token',
+      });
+
+      const result = await authService.refreshTokens('test-refresh-token');
+
+      expect(findUniqueSpy).toHaveBeenCalledWith({
+        where: { token: 'test-refresh-token' },
+        include: { user: true },
+      });
+      expect(deleteSpy).toHaveBeenCalledWith({
+        where: { token: 'test-refresh-token' },
+      });
+      expect(result).toEqual({
+        accessToken: 'test-token',
+        refreshToken: 'new-refresh-token',
+      });
+    });
+
+    it('should throw UnauthorizedException when refresh token is not found', async () => {
+      const findUniqueSpy = jest.spyOn(
+        prismaService.refreshToken,
+        'findUnique',
+      );
+      findUniqueSpy.mockResolvedValue(null);
+
+      await expect(authService.refreshTokens('invalid-token')).rejects.toThrow(
+        new UnauthorizedException('Invalid or expired refresh token'),
+      );
+    });
+
+    it('should throw UnauthorizedException when refresh token is expired', async () => {
+      const expiredToken = {
+        ...mockRefreshToken,
+        expiresAt: new Date(Date.now() - 1000), // 1 second ago
+      };
+
+      const findUniqueSpy = jest.spyOn(
+        prismaService.refreshToken,
+        'findUnique',
+      );
+      findUniqueSpy.mockResolvedValue(expiredToken);
+
+      await expect(authService.refreshTokens('expired-token')).rejects.toThrow(
+        new UnauthorizedException('Invalid or expired refresh token'),
+      );
+    });
+  });
+
+  describe('logout', () => {
+    it('should delete the refresh token', async () => {
+      const deleteSpy = jest.spyOn(prismaService.refreshToken, 'delete');
+      deleteSpy.mockResolvedValue(mockRefreshToken);
+
+      await authService.logout('test-refresh-token');
+
+      expect(deleteSpy).toHaveBeenCalledWith({
+        where: { token: 'test-refresh-token' },
+      });
     });
   });
 });
