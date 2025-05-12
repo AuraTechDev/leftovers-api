@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RegisterDto } from '../../infrastructure/dto/register.dto';
@@ -8,6 +13,8 @@ import { User } from '@prisma/client';
 import { Provider, Role } from '@prisma/client';
 import { AuthUser } from '../../domain/interfaces/user.interface';
 import { randomBytes } from 'crypto';
+import { UpdateProfileDto } from '../../infrastructure/dto/update-profile.dto';
+import { ChangePasswordDto } from '../../infrastructure/dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -189,5 +196,73 @@ export class AuthService {
 
   async logout(refreshToken: string) {
     await this.removeRefreshToken(refreshToken);
+  }
+
+  async updateProfile(userId: number, updateProfileDto: UpdateProfileDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    // Check if email is being updated and if it's already in use by another user
+    if (updateProfileDto.email && updateProfileDto.email !== user.email) {
+      const emailExists = await this.prisma.user.findUnique({
+        where: { email: updateProfileDto.email },
+      });
+
+      if (emailExists) {
+        throw new BadRequestException('El email ya está en uso');
+      }
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateProfileDto,
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...result } = updatedUser;
+    return result;
+  }
+
+  async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    // For OAuth users that don't have a password
+    if (!user.password) {
+      throw new BadRequestException(
+        'No es posible cambiar la contraseña para usuarios de proveedores externos',
+      );
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(
+      changePasswordDto.currentPassword,
+      user.password,
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('La contraseña actual es incorrecta');
+    }
+
+    const hashedNewPassword = await bcrypt.hash(
+      changePasswordDto.newPassword,
+      10,
+    );
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedNewPassword },
+    });
+
+    return { message: 'Contraseña actualizada exitosamente' };
   }
 }

@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsString,
   MinLength,
+  MaxLength,
 } from 'class-validator';
 import { Role } from '@prisma/client';
 
@@ -14,6 +15,8 @@ export class RegisterDto {
 
   @IsString()
   @IsNotEmpty()
+  @MinLength(5)
+  @MaxLength(50)
   name: string;
 
   @IsString()

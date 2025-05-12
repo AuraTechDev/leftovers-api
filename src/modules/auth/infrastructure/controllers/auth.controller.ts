@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  UseGuards,
+  Patch,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from '../../application/services/auth.service';
 import { RegisterDto } from '../dto/register.dto';
@@ -7,6 +15,8 @@ import { Roles } from '../decorators/roles.decorator';
 import { RolesGuard } from '../guards/roles.guard';
 import { Role } from '@prisma/client';
 import { AuthUser } from '../../domain/interfaces/user.interface';
+import { UpdateProfileDto } from '../dto/update-profile.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 
 interface RequestWithUser extends Request {
   user: AuthUser;
@@ -71,6 +81,24 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   getProfile(@Req() req: RequestWithUser) {
     return req.user;
+  }
+
+  @Patch('profile')
+  @UseGuards(AuthGuard('jwt'))
+  updateProfile(
+    @Req() req: RequestWithUser,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    return this.authService.updateProfile(req.user.id, updateProfileDto);
+  }
+
+  @Post('change-password')
+  @UseGuards(AuthGuard('jwt'))
+  changePassword(
+    @Req() req: RequestWithUser,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(req.user.id, changePasswordDto);
   }
 
   @Post('refresh')
