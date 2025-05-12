@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from '../../application/services/auth.service';
 import { RegisterDto } from '../dto/register.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { Roles } from '../decorators/roles.decorator';
 import { RolesGuard } from '../guards/roles.guard';
 import { Role } from '@prisma/client';
@@ -70,5 +71,16 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   getProfile(@Req() req: RequestWithUser) {
     return req.user;
+  }
+
+  @Post('refresh')
+  async refreshTokens(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refreshTokens(refreshTokenDto.refreshToken);
+  }
+
+  @Post('logout')
+  async logout(@Body() refreshTokenDto: RefreshTokenDto) {
+    await this.authService.logout(refreshTokenDto.refreshToken);
+    return { message: 'Logged out successfully' };
   }
 }

@@ -3,6 +3,7 @@ import { Role, Provider } from '@prisma/client';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../../../application/services/auth.service';
 import { RegisterDto } from '../../dto/register.dto';
+import { RefreshTokenDto } from '../../dto/refresh-token.dto';
 import { AuthUser } from '../../../domain/interfaces/user.interface';
 
 // Create RequestWithUser interface
@@ -37,6 +38,7 @@ describe('AuthController', () => {
       updatedAt: new Date(),
     },
     accessToken: 'test-token',
+    refreshToken: 'test-refresh-token',
   };
 
   // Create a mock login response that matches expected type
@@ -50,6 +52,12 @@ describe('AuthController', () => {
       provider: mockUser.provider,
     },
     accessToken: 'test-token',
+    refreshToken: 'test-refresh-token',
+  };
+
+  const mockRefreshResponse = {
+    accessToken: 'new-test-token',
+    refreshToken: 'new-test-refresh-token',
   };
 
   beforeEach(async () => {
@@ -62,6 +70,8 @@ describe('AuthController', () => {
             register: jest.fn(),
             login: jest.fn(),
             validateUser: jest.fn(),
+            refreshTokens: jest.fn(),
+            logout: jest.fn(),
           },
         },
       ],
@@ -94,16 +104,50 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should login a user', () => {
+    it('should login a user', async () => {
       const req = { user: mockUser } as RequestWithUser;
 
       const loginSpy = jest.spyOn(authService, 'login');
-      loginSpy.mockReturnValue(mockLoginResponse);
+      loginSpy.mockResolvedValue(mockLoginResponse);
 
-      const result = controller.login(req);
+      const result = await controller.login(req);
 
       expect(loginSpy).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);
+    });
+  });
+
+  describe('refreshTokens', () => {
+    it('should refresh tokens', async () => {
+      const refreshTokenDto: RefreshTokenDto = {
+        refreshToken: 'test-refresh-token',
+      };
+
+      const refreshTokensSpy = jest.spyOn(authService, 'refreshTokens');
+      refreshTokensSpy.mockResolvedValue(mockRefreshResponse);
+
+      const result = await controller.refreshTokens(refreshTokenDto);
+
+      expect(refreshTokensSpy).toHaveBeenCalledWith(
+        refreshTokenDto.refreshToken,
+      );
+      expect(result).toEqual(mockRefreshResponse);
+    });
+  });
+
+  describe('logout', () => {
+    it('should logout user', async () => {
+      const refreshTokenDto: RefreshTokenDto = {
+        refreshToken: 'test-refresh-token',
+      };
+
+      const logoutSpy = jest.spyOn(authService, 'logout');
+      logoutSpy.mockResolvedValue(undefined);
+
+      const result = await controller.logout(refreshTokenDto);
+
+      expect(logoutSpy).toHaveBeenCalledWith(refreshTokenDto.refreshToken);
+      expect(result).toEqual({ message: 'Logged out successfully' });
     });
   });
 
@@ -138,25 +182,25 @@ describe('AuthController', () => {
   });
 
   describe('OAuth callbacks', () => {
-    it('should login a user after Google authentication', () => {
+    it('should login a user after Google authentication', async () => {
       const req = { user: mockUser } as RequestWithUser;
 
       const loginSpy = jest.spyOn(authService, 'login');
-      loginSpy.mockReturnValue(mockLoginResponse);
+      loginSpy.mockResolvedValue(mockLoginResponse);
 
-      const result = controller.googleAuthCallback(req);
+      const result = await controller.googleAuthCallback(req);
 
       expect(loginSpy).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);
     });
 
-    it('should login a user after Apple authentication', () => {
+    it('should login a user after Apple authentication', async () => {
       const req = { user: mockUser } as RequestWithUser;
 
       const loginSpy = jest.spyOn(authService, 'login');
-      loginSpy.mockReturnValue(mockLoginResponse);
+      loginSpy.mockResolvedValue(mockLoginResponse);
 
-      const result = controller.appleAuthCallback(req);
+      const result = await controller.appleAuthCallback(req);
 
       expect(loginSpy).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);

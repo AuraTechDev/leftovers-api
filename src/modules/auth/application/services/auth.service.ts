@@ -7,6 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { User } from '@prisma/client';
 import { Provider, Role } from '@prisma/client';
 import { AuthUser } from '../../domain/interfaces/user.interface';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -72,12 +73,40 @@ export class AuthService {
     return user;
   }
 
-  login(user: AuthUser) {
+  private generateRefreshToken(): string {
+    return randomBytes(40).toString('hex');
+  }
+
+  private async createRefreshToken(userId: number): Promise<string> {
+    const refreshToken = this.generateRefreshToken();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
+
+    await this.prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId,
+        expiresAt,
+      },
+    });
+
+    return refreshToken;
+  }
+
+  private async removeRefreshToken(token: string): Promise<void> {
+    await this.prisma.refreshToken.delete({
+      where: { token },
+    });
+  }
+
+  async login(user: AuthUser) {
     const payload = {
       sub: user.id,
       email: user.email,
       role: user.role,
     };
+
+    const refreshToken = await this.createRefreshToken(user.id);
 
     return {
       user: {
@@ -89,6 +118,7 @@ export class AuthService {
         provider: user.provider,
       },
       accessToken: this.jwtService.sign(payload),
+      refreshToken,
     };
   }
 
@@ -120,9 +150,44 @@ export class AuthService {
       role: result.role,
     };
 
+    const refreshToken = await this.createRefreshToken(user.id);
+
     return {
       user: result,
       accessToken: this.jwtService.sign(payload),
+      refreshToken,
     };
+  }
+
+  async refreshTokens(refreshToken: string) {
+    const token = await this.prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+      include: { user: true },
+    });
+
+    if (!token || token.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    // Remove the used refresh token
+    await this.removeRefreshToken(refreshToken);
+
+    const payload = {
+      sub: token.user.id,
+      email: token.user.email,
+      role: token.user.role,
+    };
+
+    // Generate new tokens
+    const newRefreshToken = await this.createRefreshToken(token.user.id);
+
+    return {
+      accessToken: this.jwtService.sign(payload),
+      refreshToken: newRefreshToken,
+    };
+  }
+
+  async logout(refreshToken: string) {
+    await this.removeRefreshToken(refreshToken);
   }
 }
