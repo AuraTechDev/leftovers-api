@@ -241,7 +241,7 @@ describe('BusinessController', () => {
 
       const result = await controller.updateBusiness(1, updateBusinessDto, req);
 
-      expect(findByIdSpy).toHaveBeenCalledWith('2');
+      expect(findByIdSpy).toHaveBeenCalledWith(2);
       expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto);
       expect(result.name).toEqual(updateBusinessDto.name);
       expect(result.description).toEqual(updateBusinessDto.description);
@@ -259,7 +259,7 @@ describe('BusinessController', () => {
         controller.updateBusiness(999, updateBusinessDto, req),
       ).rejects.toThrow(ForbiddenException);
 
-      expect(findByIdSpy).toHaveBeenCalledWith('2');
+      expect(findByIdSpy).toHaveBeenCalledWith(2);
       expect(executeSpy).not.toHaveBeenCalled();
     });
 
@@ -277,7 +277,7 @@ describe('BusinessController', () => {
         controller.updateBusiness(1, updateBusinessDto, req),
       ).rejects.toThrow(ForbiddenException);
 
-      expect(findByIdSpy).toHaveBeenCalledWith('2');
+      expect(findByIdSpy).toHaveBeenCalledWith(2);
       expect(executeSpy).not.toHaveBeenCalled();
     });
 
@@ -293,7 +293,7 @@ describe('BusinessController', () => {
         controller.updateBusiness(1, updateBusinessDto, req),
       ).rejects.toThrow(NotFoundException);
 
-      expect(findByIdSpy).toHaveBeenCalledWith('2');
+      expect(findByIdSpy).toHaveBeenCalledWith(2);
       expect(executeSpy).not.toHaveBeenCalled();
     });
   });
