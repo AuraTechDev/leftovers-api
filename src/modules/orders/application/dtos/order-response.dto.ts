@@ -1,4 +1,4 @@
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Product, User, Business } from '@prisma/client';
 import { Order } from '../../domain/entities/order.entity';
 
 export class OrderResponseDto {
@@ -13,12 +13,12 @@ export class OrderResponseDto {
   updatedAt: Date;
 
   // Additional properties from relations
-  product?: any;
-  user?: any;
-  business?: any;
+  product?: Product;
+  user?: User;
+  business?: Business;
 
   static fromEntity(
-    order: Order & { product?: any; user?: any; business?: any },
+    order: Order & { product?: Product; user?: User; business?: Business },
   ): OrderResponseDto {
     const dto = new OrderResponseDto();
     dto.id = order.id;
