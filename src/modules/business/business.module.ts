@@ -8,9 +8,11 @@ import { GetBusinessUseCase } from './application/use-cases/get-business.use-cas
 import { GetAllBusinessesUseCase } from './application/use-cases/get-all-businesses.use-case';
 import { PrismaModule } from '../prisma/prisma.module';
 import { UsersModule } from '../users/users.module';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { UploadBusinessLogoUseCase } from './application/use-cases/upload-business-logo.use-case';
 
 @Module({
-  imports: [PrismaModule, UsersModule],
+  imports: [PrismaModule, UsersModule, CloudinaryModule],
   controllers: [BusinessController],
   providers: [
     BusinessRepository,
@@ -19,6 +21,7 @@ import { UsersModule } from '../users/users.module';
     DeleteBusinessUseCase,
     GetBusinessUseCase,
     GetAllBusinessesUseCase,
+    UploadBusinessLogoUseCase,
   ],
   exports: [BusinessRepository],
 })

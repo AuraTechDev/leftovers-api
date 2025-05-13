@@ -1,0 +1,59 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { BusinessRepository } from '../../infrastructure/repositories/business.repository';
+import { CloudinaryService } from '../../../cloudinary/cloudinary.service';
+import { BusinessResponseDto } from '../dtos/business-response.dto';
+
+@Injectable()
+export class UploadBusinessLogoUseCase {
+  constructor(
+    private readonly businessRepository: BusinessRepository,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
+
+  async execute(id: number, file: Buffer): Promise<BusinessResponseDto> {
+    const business = await this.businessRepository.findById(id);
+
+    if (!business) {
+      throw new NotFoundException(`Business with ID ${id} not found`);
+    }
+
+    let oldLogoPublicId: string | null = null;
+
+    if (business.logoUrl) {
+      try {
+        // Extract the public ID from the URL
+        // URL format is typically: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/public_id.jpg
+        const urlParts = business.logoUrl.split('/');
+        const fileNameWithExtension = urlParts[urlParts.length - 1];
+
+        oldLogoPublicId = fileNameWithExtension.split('.')[0];
+      } catch (error) {
+        console.error('Error parsing old logo URL:', error);
+      }
+    }
+
+    const uploadResult = await this.cloudinaryService.uploadImage(
+      file,
+      'business-logos',
+    );
+
+    const updatedBusiness = {
+      ...business,
+      logoUrl: uploadResult.secure_url,
+    };
+
+    const result = await this.businessRepository.update(id, updatedBusiness);
+
+    // Delete the old logo if it exists
+    if (oldLogoPublicId) {
+      try {
+        await this.cloudinaryService.deleteImage(oldLogoPublicId);
+      } catch (error) {
+        console.error('Error deleting old logo:', error);
+      }
+    }
+
+    // Return the updated business
+    return BusinessResponseDto.fromEntity(result);
+  }
+}

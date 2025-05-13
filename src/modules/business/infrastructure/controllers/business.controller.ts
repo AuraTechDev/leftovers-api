@@ -13,6 +13,8 @@ import {
   ForbiddenException,
   Request,
   ParseIntPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { CreateBusinessDto } from '../../application/dtos/create-business.dto';
 import { UpdateBusinessDto } from '../../application/dtos/update-business.dto';
@@ -28,9 +30,22 @@ import { GetAllBusinessesUseCase } from '../../application/use-cases/get-all-bus
 import { GetBusinessUseCase } from '../../application/use-cases/get-business.use-case';
 import { UpdateBusinessUseCase } from '../../application/use-cases/update-business.use-case';
 import { DeleteBusinessUseCase } from '../../application/use-cases/delete-business.use-case';
+import { UploadBusinessLogoUseCase } from '../../application/use-cases/upload-business-logo.use-case';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { BusinessResponseDto } from '../../application/dtos/business-response.dto';
 
 interface RequestWithUser extends Request {
   user: AuthUser;
+}
+
+// Define file upload interface
+interface UploadedFileType {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  buffer: Buffer;
+  size: number;
 }
 
 @Controller('business')
@@ -41,6 +56,7 @@ export class BusinessController {
     private readonly getBusinessUseCase: GetBusinessUseCase,
     private readonly updateBusinessUseCase: UpdateBusinessUseCase,
     private readonly deleteBusinessUseCase: DeleteBusinessUseCase,
+    private readonly uploadBusinessLogoUseCase: UploadBusinessLogoUseCase,
     private readonly usersRepository: UsersRepository,
   ) {}
 
@@ -94,14 +110,49 @@ export class BusinessController {
 
       // If the user does not have an associated business or is trying to edit another business
       const userBusinessId = userWithRelations.businessId || 0;
+
       if (!userBusinessId || userBusinessId !== id) {
-        throw new ForbiddenException(
-          'Solo puedes actualizar tu propio negocio',
-        );
+        throw new ForbiddenException('You can only update your own business');
       }
     }
 
     return this.updateBusinessUseCase.execute(id, updateBusinessDto);
+  }
+
+  @Post(':id/logo')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadLogo(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: UploadedFileType,
+    @Request() req: RequestWithUser,
+  ): Promise<BusinessResponseDto> {
+    // Check if user is trying to update their own business logo (if BUSINESS role)
+    if (req.user.role === Role.BUSINESS) {
+      const userWithRelations = await this.usersRepository.findById(
+        req.user.id,
+      );
+
+      if (!userWithRelations) {
+        throw new NotFoundException('User not found');
+      }
+
+      // If the user does not have an associated business or is trying to edit another business
+      const userBusinessId = userWithRelations.businessId || 0;
+
+      if (!userBusinessId || userBusinessId !== id) {
+        throw new ForbiddenException(
+          'You can only update the logo of your own business',
+        );
+      }
+    }
+
+    if (!file) {
+      throw new NotFoundException('No file uploaded');
+    }
+
+    return this.uploadBusinessLogoUseCase.execute(id, file.buffer);
   }
 
   @Delete(':id')
