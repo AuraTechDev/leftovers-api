@@ -36,6 +36,7 @@ describe('AuthController', () => {
       photoUrl: mockUser.photoUrl || null,
       provider: mockUser.provider,
       providerId: null,
+      businessId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -229,6 +230,7 @@ describe('AuthController', () => {
         role: mockUser.role,
         provider: mockUser.provider,
         providerId: null,
+        businessId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

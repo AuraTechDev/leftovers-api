@@ -33,6 +33,7 @@ export class UsersRepository implements IUserRepository {
       id: user.id.toString(),
       email: user.email,
       name: user.name,
+      businessId: user.businessId,
     });
   }
 
@@ -47,6 +48,7 @@ export class UsersRepository implements IUserRepository {
       id: user.id.toString(),
       email: user.email,
       name: user.name,
+      businessId: user.businessId,
     });
   }
 
@@ -56,6 +58,7 @@ export class UsersRepository implements IUserRepository {
       data: {
         email: userData.email,
         name: userData.name,
+        businessId: userData.businessId,
       },
     });
 
@@ -63,6 +66,7 @@ export class UsersRepository implements IUserRepository {
       id: updatedUser.id.toString(),
       email: updatedUser.email,
       name: updatedUser.name,
+      businessId: updatedUser.businessId,
     });
   }
 

@@ -16,6 +16,7 @@ describe('LocalStrategy', () => {
     provider: Provider.LOCAL,
     photoUrl: null,
     providerId: null,
+    businessId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
