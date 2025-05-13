@@ -4,6 +4,7 @@ import { PrismaModule } from './modules/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BusinessModule } from './modules/business/business.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
+import { ProductsModule } from './modules/products/products.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
     AuthModule,
     BusinessModule,
     CloudinaryModule,
+    ProductsModule,
   ],
   controllers: [],
   providers: [],
