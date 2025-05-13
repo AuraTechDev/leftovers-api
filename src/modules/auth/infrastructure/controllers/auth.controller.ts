@@ -7,7 +7,6 @@ import {
   UseGuards,
   Patch,
 } from '@nestjs/common';
-import { AuthService } from '../../application/services/auth.service';
 import { RegisterDto } from '../dto/register.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { Roles } from '../decorators/roles.decorator';
@@ -20,6 +19,15 @@ import { LocalAuthGuard } from '../guards/local-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { GoogleAuthGuard } from '../guards/google-auth.guard';
 import { AppleAuthGuard } from '../guards/apple-auth.guard';
+import {
+  LoginUseCase,
+  RegisterUseCase,
+  RefreshTokensUseCase,
+  LogoutUseCase,
+  OAuthLoginUseCase,
+  UpdateProfileUseCase,
+  ChangePasswordUseCase,
+} from '../../application/use-cases';
 
 interface RequestWithUser extends Request {
   user: AuthUser;
@@ -27,17 +35,25 @@ interface RequestWithUser extends Request {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private readonly loginUseCase: LoginUseCase,
+    private readonly registerUseCase: RegisterUseCase,
+    private readonly refreshTokensUseCase: RefreshTokensUseCase,
+    private readonly logoutUseCase: LogoutUseCase,
+    private readonly oauthLoginUseCase: OAuthLoginUseCase,
+    private readonly updateProfileUseCase: UpdateProfileUseCase,
+    private readonly changePasswordUseCase: ChangePasswordUseCase,
+  ) {}
 
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+    return this.registerUseCase.execute(registerDto);
   }
 
   @Post('login')
   @UseGuards(LocalAuthGuard)
   login(@Req() req: RequestWithUser) {
-    return this.authService.login(req.user);
+    return this.loginUseCase.execute(req.user);
   }
 
   // User management routes (admin only)
@@ -65,7 +81,7 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   googleAuthCallback(@Req() req: RequestWithUser) {
-    return this.authService.login(req.user);
+    return this.oauthLoginUseCase.execute(req.user);
   }
 
   @Get('apple')
@@ -77,7 +93,7 @@ export class AuthController {
   @Get('apple/callback')
   @UseGuards(AppleAuthGuard)
   appleAuthCallback(@Req() req: RequestWithUser) {
-    return this.authService.login(req.user);
+    return this.oauthLoginUseCase.execute(req.user);
   }
 
   @Get('profile')
@@ -92,7 +108,7 @@ export class AuthController {
     @Req() req: RequestWithUser,
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
-    return this.authService.updateProfile(req.user.id, updateProfileDto);
+    return this.updateProfileUseCase.execute(req.user.id, updateProfileDto);
   }
 
   @Post('change-password')
@@ -101,17 +117,17 @@ export class AuthController {
     @Req() req: RequestWithUser,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
-    return this.authService.changePassword(req.user.id, changePasswordDto);
+    return this.changePasswordUseCase.execute(req.user.id, changePasswordDto);
   }
 
   @Post('refresh')
   async refreshTokens(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshTokens(refreshTokenDto.refreshToken);
+    return this.refreshTokensUseCase.execute(refreshTokenDto.refreshToken);
   }
 
   @Post('logout')
   async logout(@Body() refreshTokenDto: RefreshTokenDto) {
-    await this.authService.logout(refreshTokenDto.refreshToken);
+    await this.logoutUseCase.execute(refreshTokenDto.refreshToken);
     return { message: 'Logged out successfully' };
   }
 }
