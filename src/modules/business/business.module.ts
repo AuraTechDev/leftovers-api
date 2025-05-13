@@ -8,9 +8,10 @@ import { DeleteBusinessUseCase } from './application/use-cases/delete-business.u
 import { GetBusinessUseCase } from './application/use-cases/get-business.use-case';
 import { GetAllBusinessesUseCase } from './application/use-cases/get-all-businesses.use-case';
 import { PrismaModule } from '../prisma/prisma.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, UsersModule],
   controllers: [BusinessController],
   providers: [
     BusinessService,
