@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Role, Provider } from '@prisma/client';
-import { AuthController } from '../auth.controller';
+import { AuthController } from '../../controllers/auth.controller';
 import { AuthService } from '../../../application/services/auth.service';
 import { RegisterDto } from '../../dto/register.dto';
 import { RefreshTokenDto } from '../../dto/refresh-token.dto';
 import { AuthUser } from '../../../domain/interfaces/user.interface';
+import { UpdateProfileDto } from '../../dto/update-profile.dto';
+import { ChangePasswordDto } from '../../dto/change-password.dto';
 
 // Create RequestWithUser interface
 interface RequestWithUser extends Request {
@@ -72,6 +74,8 @@ describe('AuthController', () => {
             validateUser: jest.fn(),
             refreshTokens: jest.fn(),
             logout: jest.fn(),
+            updateProfile: jest.fn(),
+            changePassword: jest.fn(),
           },
         },
       ],
@@ -204,6 +208,66 @@ describe('AuthController', () => {
 
       expect(loginSpy).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('should update the user profile', async () => {
+      const req = { user: mockUser } as RequestWithUser;
+      const updateProfileDto: UpdateProfileDto = {
+        name: 'Updated Name',
+        email: 'updated@example.com',
+        photoUrl: 'https://updated-photo-url.com',
+      };
+
+      // Mocked response from service with required User properties
+      const updatedUser = {
+        id: mockUser.id,
+        name: updateProfileDto.name!,
+        email: updateProfileDto.email!,
+        photoUrl: updateProfileDto.photoUrl || null,
+        role: mockUser.role,
+        provider: mockUser.provider,
+        providerId: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const updateProfileSpy = jest.spyOn(authService, 'updateProfile');
+      updateProfileSpy.mockResolvedValue(updatedUser);
+
+      const result = await controller.updateProfile(req, updateProfileDto);
+
+      expect(updateProfileSpy).toHaveBeenCalledWith(
+        mockUser.id,
+        updateProfileDto,
+      );
+      expect(result).toEqual(updatedUser);
+    });
+  });
+
+  describe('changePassword', () => {
+    it('should change the user password', async () => {
+      const req = { user: mockUser } as RequestWithUser;
+      const changePasswordDto: ChangePasswordDto = {
+        currentPassword: 'current-password',
+        newPassword: 'new-password',
+      };
+
+      const serviceResponse = {
+        message: 'Contraseña actualizada exitosamente',
+      };
+
+      const changePasswordSpy = jest.spyOn(authService, 'changePassword');
+      changePasswordSpy.mockResolvedValue(serviceResponse);
+
+      const result = await controller.changePassword(req, changePasswordDto);
+
+      expect(changePasswordSpy).toHaveBeenCalledWith(
+        mockUser.id,
+        changePasswordDto,
+      );
+      expect(result).toEqual(serviceResponse);
     });
   });
 });

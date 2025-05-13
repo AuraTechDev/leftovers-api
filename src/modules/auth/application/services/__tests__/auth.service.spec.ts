@@ -2,12 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from '../auth.service';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import { UnauthorizedException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Provider, Role, User } from '@prisma/client';
 import { RegisterDto } from '../../../infrastructure/dto/register.dto';
 import { OAuthLoginDto } from '../../../infrastructure/dto/oauth-login.dto';
 import * as bcrypt from 'bcryptjs';
 import { AuthUser } from '../../../domain/interfaces/user.interface';
+import { UpdateProfileDto } from '../../../infrastructure/dto/update-profile.dto';
+import { ChangePasswordDto } from '../../../infrastructure/dto/change-password.dto';
 
 jest.mock('bcryptjs', () => ({
   compare: jest.fn(),
@@ -237,11 +243,10 @@ describe('AuthService', () => {
         provider: Provider.LOCAL,
       };
 
-      const createRefreshTokenSpy = jest.spyOn(
-        prismaService.refreshToken,
-        'create',
-      );
-      createRefreshTokenSpy.mockResolvedValue(mockRefreshToken);
+      // Mock the private method that generates the refresh token
+      jest
+        .spyOn<any, any>(authService, 'createRefreshToken')
+        .mockResolvedValue('test-refresh-token');
 
       const result = await authService.login(authUser);
 
@@ -254,7 +259,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         user: authUser,
         accessToken: 'test-token',
-        refreshToken: mockRefreshToken.token,
+        refreshToken: 'test-refresh-token',
       });
     });
   });
@@ -279,11 +284,10 @@ describe('AuthService', () => {
       const createSpy = jest.spyOn(prismaService.user, 'create');
       createSpy.mockResolvedValue(createdUser);
 
-      const createRefreshTokenSpy = jest.spyOn(
-        prismaService.refreshToken,
-        'create',
-      );
-      createRefreshTokenSpy.mockResolvedValue(mockRefreshToken);
+      // Mock the private method that generates the refresh token
+      jest
+        .spyOn<any, any>(authService, 'createRefreshToken')
+        .mockResolvedValue('test-refresh-token');
 
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
 
@@ -308,7 +312,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         user: expectedUser,
         accessToken: 'test-token',
-        refreshToken: mockRefreshToken.token,
+        refreshToken: 'test-refresh-token',
       });
     });
 
@@ -333,14 +337,10 @@ describe('AuthService', () => {
       const deleteSpy = jest.spyOn(prismaService.refreshToken, 'delete');
       deleteSpy.mockResolvedValue(mockRefreshToken);
 
-      const createRefreshTokenSpy = jest.spyOn(
-        prismaService.refreshToken,
-        'create',
-      );
-      createRefreshTokenSpy.mockResolvedValue({
-        ...mockRefreshToken,
-        token: 'new-refresh-token',
-      });
+      // Mock the private method that generates the refresh token
+      jest
+        .spyOn<any, any>(authService, 'createRefreshToken')
+        .mockResolvedValue('new-refresh-token');
 
       const result = await authService.refreshTokens('test-refresh-token');
 
@@ -397,6 +397,193 @@ describe('AuthService', () => {
       expect(deleteSpy).toHaveBeenCalledWith({
         where: { token: 'test-refresh-token' },
       });
+    });
+  });
+
+  describe('updateProfile', () => {
+    const updateProfileDto: UpdateProfileDto = {
+      name: 'Updated Name',
+      email: 'updated@example.com',
+      photoUrl: 'https://updated-photo-url.com',
+    };
+
+    it('should update user profile successfully', async () => {
+      const userId = 1;
+      const updatedUser: User = {
+        ...mockUser,
+        name: updateProfileDto.name!,
+        email: updateProfileDto.email!,
+        photoUrl: updateProfileDto.photoUrl || null,
+      };
+
+      const findUniqueSpy = jest.spyOn(prismaService.user, 'findUnique');
+      findUniqueSpy.mockResolvedValueOnce(mockUser); // First call to check if user exists
+
+      // No existing user with updated email
+      findUniqueSpy.mockResolvedValueOnce(null);
+
+      const updateSpy = jest.spyOn(prismaService.user, 'update');
+      updateSpy.mockResolvedValue(updatedUser);
+
+      const result = await authService.updateProfile(userId, updateProfileDto);
+
+      expect(findUniqueSpy).toHaveBeenCalledWith({
+        where: { id: userId },
+      });
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: updateProfileDto,
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password: _, ...expectedUser } = updatedUser;
+      expect(result).toEqual(expectedUser);
+    });
+
+    it('should throw NotFoundException when user is not found', async () => {
+      const userId = 999;
+      const findUniqueSpy = jest.spyOn(prismaService.user, 'findUnique');
+      findUniqueSpy.mockResolvedValue(null);
+
+      await expect(
+        authService.updateProfile(userId, updateProfileDto),
+      ).rejects.toThrow(new NotFoundException('Usuario no encontrado'));
+    });
+
+    it('should throw BadRequestException when email is already in use', async () => {
+      const userId = 1;
+      const existingUser = { ...mockUser, id: 2 }; // Different user with the same email
+
+      const findUniqueSpy = jest.spyOn(prismaService.user, 'findUnique');
+      findUniqueSpy.mockResolvedValueOnce(mockUser); // First call to check if user exists
+      findUniqueSpy.mockResolvedValueOnce(existingUser); // Second call to check if email exists
+
+      await expect(
+        authService.updateProfile(userId, {
+          email: 'updated@example.com',
+        }),
+      ).rejects.toThrow(new BadRequestException('El email ya está en uso'));
+    });
+
+    it('should only update provided fields', async () => {
+      const userId = 1;
+      const partialUpdateDto: UpdateProfileDto = {
+        name: 'Updated Name',
+      };
+
+      const updatedUser: User = {
+        ...mockUser,
+        name: partialUpdateDto.name!,
+      };
+
+      const findUniqueSpy = jest.spyOn(prismaService.user, 'findUnique');
+      findUniqueSpy.mockResolvedValue(mockUser);
+
+      const updateSpy = jest.spyOn(prismaService.user, 'update');
+      updateSpy.mockResolvedValue(updatedUser);
+
+      const result = await authService.updateProfile(userId, partialUpdateDto);
+
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: partialUpdateDto,
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password: _, ...expectedUser } = updatedUser;
+      expect(result).toEqual(expectedUser);
+    });
+  });
+
+  describe('changePassword', () => {
+    const changePasswordDto: ChangePasswordDto = {
+      currentPassword: 'current-password',
+      newPassword: 'new-password',
+    };
+
+    it('should change password successfully', async () => {
+      const userId = 1;
+
+      const findUniqueSpy = jest.spyOn(prismaService.user, 'findUnique');
+      findUniqueSpy.mockResolvedValue(mockUser);
+
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-password');
+
+      const updateSpy = jest.spyOn(prismaService.user, 'update');
+      updateSpy.mockResolvedValue({
+        ...mockUser,
+        password: 'new-hashed-password',
+      });
+
+      const result = await authService.changePassword(
+        userId,
+        changePasswordDto,
+      );
+
+      expect(findUniqueSpy).toHaveBeenCalledWith({
+        where: { id: userId },
+      });
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        changePasswordDto.currentPassword,
+        mockUser.password,
+      );
+      expect(bcrypt.hash).toHaveBeenCalledWith(
+        changePasswordDto.newPassword,
+        10,
+      );
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: { password: 'new-hashed-password' },
+      });
+      expect(result).toEqual({
+        message: 'Contraseña actualizada exitosamente',
+      });
+    });
+
+    it('should throw NotFoundException when user is not found', async () => {
+      const userId = 999;
+      const findUniqueSpy = jest.spyOn(prismaService.user, 'findUnique');
+      findUniqueSpy.mockResolvedValue(null);
+
+      await expect(
+        authService.changePassword(userId, changePasswordDto),
+      ).rejects.toThrow(new NotFoundException('Usuario no encontrado'));
+    });
+
+    it('should throw BadRequestException for OAuth users without password', async () => {
+      const userId = 1;
+      const oauthUser: User = {
+        ...mockUser,
+        password: null,
+        provider: Provider.GOOGLE,
+      };
+
+      const findUniqueSpy = jest.spyOn(prismaService.user, 'findUnique');
+      findUniqueSpy.mockResolvedValue(oauthUser);
+
+      await expect(
+        authService.changePassword(userId, changePasswordDto),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'No es posible cambiar la contraseña para usuarios de proveedores externos',
+        ),
+      );
+    });
+
+    it('should throw UnauthorizedException when current password is incorrect', async () => {
+      const userId = 1;
+
+      const findUniqueSpy = jest.spyOn(prismaService.user, 'findUnique');
+      findUniqueSpy.mockResolvedValue(mockUser);
+
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        authService.changePassword(userId, changePasswordDto),
+      ).rejects.toThrow(
+        new UnauthorizedException('La contraseña actual es incorrecta'),
+      );
     });
   });
 });
