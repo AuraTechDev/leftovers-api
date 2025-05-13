@@ -10,6 +10,8 @@ import {
   HttpCode,
   NotFoundException,
   UseGuards,
+  ForbiddenException,
+  Request,
 } from '@nestjs/common';
 import { BusinessService } from '../services/business.service';
 import { CreateBusinessDto } from '../../application/dtos/create-business.dto';
@@ -19,10 +21,19 @@ import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
 import { Roles } from '../../../auth/infrastructure/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { AuthUser } from '../../../auth/domain/interfaces/user.interface';
+import { UsersService } from '../../../users/infrastructure/services/users.service';
+
+interface RequestWithUser extends Request {
+  user: AuthUser;
+}
 
 @Controller('business')
 export class BusinessController {
-  constructor(private readonly businessService: BusinessService) {}
+  constructor(
+    private readonly businessService: BusinessService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -49,11 +60,28 @@ export class BusinessController {
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.SUPER_ADMIN) // Por ahora solo SUPER_ADMIN puede editar negocios
+  @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
   async updateBusiness(
     @Param('id') id: string,
     @Body() updateBusinessDto: UpdateBusinessDto,
+    @Request() req: RequestWithUser,
   ): Promise<Business> {
+    // If the user has the BUSINESS role, we verify that they are trying to update their own business
+    if (req.user.role === Role.BUSINESS) {
+      // Retrieve the complete user with their relations from the database
+      const userWithRelations = await this.usersService.getUserById(
+        req.user.id.toString(),
+      );
+
+      // If the user does not have an associated business or is trying to edit another business
+      const userBusinessId = userWithRelations.businessId || '';
+      if (!userBusinessId || userBusinessId !== id) {
+        throw new ForbiddenException(
+          'Solo puedes actualizar tu propio negocio',
+        );
+      }
+    }
+
     return await this.businessService.updateBusiness(id, updateBusinessDto);
   }
 
