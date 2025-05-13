@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ProductsRepository } from '../../infrastructure/repositories/products.repository';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProductInventoryService {
@@ -10,16 +11,16 @@ export class ProductInventoryService {
   ) {}
 
   /**
-   * Validates if a product can be ordered based on:
-   * 1. Product exists
-   * 2. Product is not disabled
-   * 3. Requested quantity is available
+   * Validates product can be ordered (exists, not disabled, has stock)
    */
-  async validateProductForOrder(
+  private async validateProduct(
     productId: number,
     requestedQuantity: number,
-  ): Promise<boolean> {
-    const product = await this.productsRepository.findById(productId);
+    prismaClient: Prisma.TransactionClient | PrismaService = this.prisma,
+  ) {
+    const product = await prismaClient.product.findUnique({
+      where: { id: productId },
+    });
 
     if (!product) {
       throw new BadRequestException(`Product with ID ${productId} not found`);
@@ -43,15 +44,27 @@ export class ProductInventoryService {
       );
     }
 
+    return product;
+  }
+
+  /**
+   * Validates if a product can be ordered based on:
+   * 1. Product exists
+   * 2. Product is not disabled
+   * 3. Requested quantity is available
+   */
+  async validateProductForOrder(
+    productId: number,
+    requestedQuantity: number,
+  ): Promise<boolean> {
+    await this.validateProduct(productId, requestedQuantity);
     return true;
   }
 
   /**
-   * Updates product quantity within a transaction
-   * Returns the updated product
+   * Updates product quantity
    */
   async decreaseInventory(productId: number, quantity: number): Promise<void> {
-    // This will be called within a transaction when creating an order
     await this.productsRepository.decreaseQuantity(productId, quantity);
   }
 
@@ -62,44 +75,30 @@ export class ProductInventoryService {
   async validateAndDecreaseInventory(
     productId: number,
     requestedQuantity: number,
+    prismaClient: Prisma.TransactionClient | PrismaService = this.prisma,
   ): Promise<void> {
-    return this.prisma.$transaction(async (prisma) => {
-      // Get product with a lock for update
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
+    if (prismaClient === this.prisma) {
+      // If not called with a transaction, create one
+      return this.prisma.$transaction(async (tx) => {
+        await this.validateAndDecreaseInventory(
+          productId,
+          requestedQuantity,
+          tx,
+        );
       });
+    }
 
-      if (!product) {
-        throw new BadRequestException(`Product with ID ${productId} not found`);
-      }
+    // Called with transaction client
+    await this.validateProduct(productId, requestedQuantity, prismaClient);
 
-      if (product.isDisabled) {
-        throw new BadRequestException(
-          `Product with ID ${productId} is currently unavailable`,
-        );
-      }
-
-      if (product.quantity <= 0) {
-        throw new BadRequestException(
-          `Product with ID ${productId} is out of stock`,
-        );
-      }
-
-      if (requestedQuantity > product.quantity) {
-        throw new BadRequestException(
-          `Requested quantity (${requestedQuantity}) exceeds available stock (${product.quantity}) for product with ID ${productId}`,
-        );
-      }
-
-      // Update product quantity
-      await prisma.product.update({
-        where: { id: productId },
-        data: {
-          quantity: {
-            decrement: requestedQuantity,
-          },
+    // Update product quantity
+    await prismaClient.product.update({
+      where: { id: productId },
+      data: {
+        quantity: {
+          decrement: requestedQuantity,
         },
-      });
+      },
     });
   }
 }

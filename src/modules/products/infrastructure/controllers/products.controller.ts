@@ -35,8 +35,7 @@ import { GetProductUseCase } from '../../application/use-cases/get-product.use-c
 import { UpdateProductUseCase } from '../../application/use-cases/update-product.use-case';
 import { DeleteProductUseCase } from '../../application/use-cases/delete-product.use-case';
 import { UploadProductImageUseCase } from '../../application/use-cases/upload-product-image.use-case';
-import { ToggleProductFeatureUseCase } from '../../application/use-cases/toggle-product-feature.use-case';
-import { ToggleProductDisableUseCase } from '../../application/use-cases/toggle-product-disable.use-case';
+import { ToggleProductPropertyUseCase } from '../../application/use-cases/toggle-product-property.use-case';
 
 // Food Types Use Cases
 import { CreateFoodTypeUseCase } from '../../application/use-cases/create-food-type.use-case';
@@ -75,8 +74,7 @@ export class ProductsController {
     private readonly updateProductUseCase: UpdateProductUseCase,
     private readonly deleteProductUseCase: DeleteProductUseCase,
     private readonly uploadProductImageUseCase: UploadProductImageUseCase,
-    private readonly toggleProductFeatureUseCase: ToggleProductFeatureUseCase,
-    private readonly toggleProductDisableUseCase: ToggleProductDisableUseCase,
+    private readonly toggleProductPropertyUseCase: ToggleProductPropertyUseCase,
 
     // Food type use cases
     private readonly createFoodTypeUseCase: CreateFoodTypeUseCase,
@@ -244,7 +242,7 @@ export class ProductsController {
       );
     }
 
-    return this.toggleProductFeatureUseCase.execute(id);
+    return this.toggleProductPropertyUseCase.execute(id, 'isFeatured');
   }
 
   @Patch('products/:id/disable')
@@ -266,7 +264,7 @@ export class ProductsController {
       );
     }
 
-    return this.toggleProductDisableUseCase.execute(id);
+    return this.toggleProductPropertyUseCase.execute(id, 'isDisabled');
   }
 
   /* ========= FOOD TYPE ENDPOINTS ========= */

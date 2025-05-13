@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OrdersRepository } from '../../infrastructure/repositories/orders.repository';
 import { CreateOrderDto } from '../dtos/create-order.dto';
 import { Order } from '../../domain/entities/order.entity';
@@ -22,50 +18,14 @@ export class CreateOrderUseCase {
   async execute(createOrderDto: CreateOrderDto): Promise<OrderResponseDto> {
     // Use transaction to ensure atomicity of inventory check and order creation
     return this.prisma.$transaction(async (prisma) => {
-      // 1. Validate product availability and quantity
-      // Get the product with a lock for update
-      const product = await prisma.product.findUnique({
-        where: { id: createOrderDto.productId },
-      });
+      // 1. Validate product availability and quantity, and decrease stock
+      await this.productInventoryService.validateAndDecreaseInventory(
+        createOrderDto.productId,
+        createOrderDto.quantity,
+        prisma,
+      );
 
-      if (!product) {
-        throw new NotFoundException(
-          `Product with ID ${createOrderDto.productId} not found`,
-        );
-      }
-
-      // Check if product is disabled
-      if (product.isDisabled) {
-        throw new BadRequestException(
-          `Product with ID ${createOrderDto.productId} is currently unavailable`,
-        );
-      }
-
-      // Check if product is out of stock
-      if (product.quantity <= 0) {
-        throw new BadRequestException(
-          `Product with ID ${createOrderDto.productId} is out of stock`,
-        );
-      }
-
-      // Check if there's enough stock
-      if (createOrderDto.quantity > product.quantity) {
-        throw new BadRequestException(
-          `Requested quantity (${createOrderDto.quantity}) exceeds available stock (${product.quantity}) for product with ID ${createOrderDto.productId}`,
-        );
-      }
-
-      // 2. Update the product quantity
-      await prisma.product.update({
-        where: { id: createOrderDto.productId },
-        data: {
-          quantity: {
-            decrement: createOrderDto.quantity,
-          },
-        },
-      });
-
-      // 3. Create the order
+      // 2. Create the order
       const order = new Order();
       Object.assign(order, {
         ...createOrderDto,

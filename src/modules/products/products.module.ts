@@ -16,8 +16,7 @@ import { CreateFoodTypeUseCase } from './application/use-cases/create-food-type.
 import { UpdateFoodTypeUseCase } from './application/use-cases/update-food-type.use-case';
 import { DeleteFoodTypeUseCase } from './application/use-cases/delete-food-type.use-case';
 import { UploadProductImageUseCase } from './application/use-cases/upload-product-image.use-case';
-import { ToggleProductFeatureUseCase } from './application/use-cases/toggle-product-feature.use-case';
-import { ToggleProductDisableUseCase } from './application/use-cases/toggle-product-disable.use-case';
+import { ToggleProductPropertyUseCase } from './application/use-cases/toggle-product-property.use-case';
 import { ProductInventoryService } from './application/services/product-inventory.service';
 
 @Module({
@@ -38,8 +37,7 @@ import { ProductInventoryService } from './application/services/product-inventor
     GetProductUseCase,
     GetAllProductsUseCase,
     UploadProductImageUseCase,
-    ToggleProductFeatureUseCase,
-    ToggleProductDisableUseCase,
+    ToggleProductPropertyUseCase,
 
     // Food type use cases
     GetAllFoodTypesUseCase,
