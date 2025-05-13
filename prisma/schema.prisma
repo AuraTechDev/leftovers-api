@@ -25,6 +25,8 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
+  Business      Business?      @relation(fields: [businessId], references: [id])
+  businessId    String?
 }
 
 model RefreshToken {
@@ -35,6 +37,35 @@ model RefreshToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Business {
+  id           String    @id @default(uuid())
+  name         String
+  description  String?
+  address      String
+  latitude     Float
+  longitude    Float
+  contactEmail String
+  phone        String?
+  logoUrl      String?
+  products     Product[]
+  users        User[]    @relation // Users (with BUSINESS role) assigned to this business
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  quantity    Int
+  imageUrl    String?
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum Role {
