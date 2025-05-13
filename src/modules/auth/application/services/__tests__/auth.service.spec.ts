@@ -34,6 +34,7 @@ describe('AuthService', () => {
     photoUrl: null,
     provider: Provider.LOCAL,
     providerId: null,
+    businessId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
