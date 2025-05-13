@@ -1,22 +1,21 @@
 import {
   IsString,
   IsEmail,
-  IsNotEmpty,
-  IsEnum,
   IsOptional,
+  IsEnum,
   IsNumber,
   IsUrl,
 } from 'class-validator';
 import { Role, Provider } from '@prisma/client';
 
-export class CreateUserDto {
+export class UpdateUserDto {
   @IsString()
-  @IsNotEmpty()
-  name: string;
+  @IsOptional()
+  name?: string;
 
   @IsEmail()
-  @IsNotEmpty()
-  email: string;
+  @IsOptional()
+  email?: string;
 
   @IsString()
   @IsOptional()
@@ -28,11 +27,11 @@ export class CreateUserDto {
 
   @IsEnum(Role)
   @IsOptional()
-  role?: Role = Role.USER;
+  role?: Role;
 
   @IsEnum(Provider)
   @IsOptional()
-  provider?: Provider = Provider.LOCAL;
+  provider?: Provider;
 
   @IsString()
   @IsOptional()

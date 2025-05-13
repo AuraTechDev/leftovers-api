@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { BusinessController } from './infrastructure/controllers/business.controller';
-import { BusinessService } from './infrastructure/services/business.service';
 import { BusinessRepository } from './infrastructure/repositories/business.repository';
 import { CreateBusinessUseCase } from './application/use-cases/create-business.use-case';
 import { UpdateBusinessUseCase } from './application/use-cases/update-business.use-case';
@@ -14,7 +13,6 @@ import { UsersModule } from '../users/users.module';
   imports: [PrismaModule, UsersModule],
   controllers: [BusinessController],
   providers: [
-    BusinessService,
     BusinessRepository,
     CreateBusinessUseCase,
     UpdateBusinessUseCase,
@@ -22,6 +20,6 @@ import { UsersModule } from '../users/users.module';
     GetBusinessUseCase,
     GetAllBusinessesUseCase,
   ],
-  exports: [BusinessService],
+  exports: [BusinessRepository],
 })
 export class BusinessModule {}
