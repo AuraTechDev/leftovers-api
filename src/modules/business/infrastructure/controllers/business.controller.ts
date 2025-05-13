@@ -33,6 +33,7 @@ import { DeleteBusinessUseCase } from '../../application/use-cases/delete-busine
 import { UploadBusinessLogoUseCase } from '../../application/use-cases/upload-business-logo.use-case';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BusinessResponseDto } from '../../application/dtos/business-response.dto';
+import { imageUploadOptions } from '../config/file-upload.config';
 
 interface RequestWithUser extends Request {
   user: AuthUser;
@@ -122,7 +123,7 @@ export class BusinessController {
   @Post(':id/logo')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', imageUploadOptions))
   async uploadLogo(
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile() file: UploadedFileType,

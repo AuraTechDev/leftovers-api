@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { BusinessRepository } from '../../infrastructure/repositories/business.repository';
 import { CloudinaryService } from '../../../cloudinary/cloudinary.service';
 import { BusinessResponseDto } from '../dtos/business-response.dto';
+import { CLOUDINARY_FOLDERS } from '../../../cloudinary/constants/cloudinary-folders';
 
 @Injectable()
 export class UploadBusinessLogoUseCase {
@@ -34,7 +35,7 @@ export class UploadBusinessLogoUseCase {
 
     const uploadResult = await this.cloudinaryService.uploadImage(
       file,
-      'business-logos',
+      CLOUDINARY_FOLDERS.BUSINESS_LOGOS,
     );
 
     const updatedBusiness = {
