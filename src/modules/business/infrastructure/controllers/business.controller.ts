@@ -54,11 +54,15 @@ export class BusinessController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPER_ADMIN)
   async getAllBusinesses(): Promise<Business[]> {
     return this.getAllBusinessesUseCase.execute();
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPER_ADMIN)
   async getBusinessById(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<Business> {
