@@ -13,7 +13,7 @@ export class UpdateUserUseCase {
   constructor(private readonly usersRepository: UsersRepository) {}
 
   async execute(
-    id: string,
+    id: number,
     userData: UpdateUserDto,
     currentUserRole?: Role,
   ): Promise<UserResponseDto> {

@@ -25,9 +25,9 @@ export class UsersRepository implements IUserRepository {
     return this.mapToEntity(createdUser);
   }
 
-  async findById(id: string): Promise<User | null> {
+  async findById(id: number): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
-      where: { id: parseInt(id) },
+      where: { id },
     });
 
     if (!user) return null;
@@ -50,9 +50,9 @@ export class UsersRepository implements IUserRepository {
     return users.map((user) => this.mapToEntity(user));
   }
 
-  async update(id: string, userData: Partial<User>): Promise<User> {
+  async update(id: number, userData: Partial<User>): Promise<User> {
     const updatedUser = await this.prisma.user.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data: {
         email: userData.email,
         name: userData.name,
@@ -68,9 +68,9 @@ export class UsersRepository implements IUserRepository {
     return this.mapToEntity(updatedUser);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: number): Promise<void> {
     await this.prisma.user.delete({
-      where: { id: parseInt(id) },
+      where: { id },
     });
   }
 

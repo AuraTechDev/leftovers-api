@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   CreateUserUseCase,
@@ -57,14 +58,16 @@ export class UsersController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async getUser(@Param('id') id: string): Promise<UserResponseDto> {
+  async getUser(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<UserResponseDto> {
     return this.getUserUseCase.execute(id);
   }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   async updateUser(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() userData: UpdateUserDto,
     @GetUser() currentUser: AuthUser,
   ): Promise<UserResponseDto> {
@@ -75,7 +78,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteUser(@Param('id') id: string): Promise<void> {
+  async deleteUser(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.deleteUserUseCase.execute(id);
   }
 }

@@ -6,7 +6,7 @@ import { UserResponseDto } from '../dtos/user-response.dto';
 export class GetUserUseCase {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  async execute(id: string): Promise<UserResponseDto> {
+  async execute(id: number): Promise<UserResponseDto> {
     const user = await this.usersRepository.findById(id);
 
     if (!user) {

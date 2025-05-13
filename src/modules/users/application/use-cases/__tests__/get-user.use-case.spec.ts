@@ -36,7 +36,7 @@ describe('GetUserUseCase', () => {
   describe('execute', () => {
     it('should return user when found', async () => {
       // Arrange
-      const userId = '1';
+      const userId = 1;
       const mockUser: User = {
         id: 1,
         name: 'Test User',
@@ -63,7 +63,7 @@ describe('GetUserUseCase', () => {
 
     it('should throw NotFoundException when user not found', async () => {
       // Arrange
-      const userId = '999';
+      const userId = 999;
       usersRepository.findById.mockResolvedValue(null);
 
       // Act & Assert

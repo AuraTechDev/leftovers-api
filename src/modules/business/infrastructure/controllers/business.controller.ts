@@ -81,7 +81,7 @@ export class BusinessController {
     if (req.user.role === Role.BUSINESS) {
       // Retrieve the complete user with their relations from the database
       const userWithRelations = await this.usersRepository.findById(
-        req.user.id.toString(),
+        req.user.id,
       );
 
       if (!userWithRelations) {

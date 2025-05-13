@@ -35,7 +35,7 @@ describe('DeleteUserUseCase', () => {
   });
 
   describe('execute', () => {
-    const userId = '1';
+    const userId = 1;
     const mockUser: User = {
       id: 1,
       name: 'Test User',

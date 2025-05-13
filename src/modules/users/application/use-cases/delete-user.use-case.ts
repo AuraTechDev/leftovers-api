@@ -5,7 +5,7 @@ import { UsersRepository } from '../../infrastructure/repositories/users.reposit
 export class DeleteUserUseCase {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  async execute(id: string): Promise<void> {
+  async execute(id: number): Promise<void> {
     const user = await this.usersRepository.findById(id);
 
     if (!user) {
