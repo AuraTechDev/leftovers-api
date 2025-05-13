@@ -35,7 +35,6 @@ export class UpdateUserUseCase {
 
     const updatedUser = await this.usersRepository.update(id, {
       ...userData,
-      updatedAt: new Date(),
     });
 
     return UserResponseDto.fromEntity(updatedUser);

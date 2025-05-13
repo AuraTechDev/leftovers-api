@@ -42,8 +42,6 @@ export class CreateUserUseCase {
     // Create new user
     const user = new User({
       ...userData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     });
 
     const createdUser = await this.usersRepository.create(user);

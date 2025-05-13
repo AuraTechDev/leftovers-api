@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { BusinessRepository } from '../../infrastructure/repositories/business.repository';
 import { UpdateBusinessDto } from '../dtos/update-business.dto';
-import { Business } from '../../domain/entities/business.entity';
+import { BusinessResponseDto } from '../dtos/business-response.dto';
 
 @Injectable()
 export class UpdateBusinessUseCase {
@@ -10,12 +10,20 @@ export class UpdateBusinessUseCase {
   async execute(
     id: number,
     updateBusinessDto: UpdateBusinessDto,
-  ): Promise<Business> {
+  ): Promise<BusinessResponseDto> {
     const business = await this.businessRepository.findById(id);
     if (!business) {
       throw new NotFoundException(`Business with ID ${id} not found`);
     }
 
-    return await this.businessRepository.update(id, updateBusinessDto);
+    // Update the entity with new values
+    const updatedBusiness = {
+      ...business,
+      ...updateBusinessDto,
+    };
+
+    // Pass the entity to the repository
+    const result = await this.businessRepository.update(id, updatedBusiness);
+    return BusinessResponseDto.fromEntity(result);
   }
 }
