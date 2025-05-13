@@ -16,7 +16,7 @@ export class CreateBusinessDto {
   @IsOptional()
   @IsString()
   @MaxLength(500)
-  description?: string;
+  description?: string | null;
 
   @IsNotEmpty()
   @IsString()
@@ -37,13 +37,13 @@ export class CreateBusinessDto {
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  phone?: string | null;
 
   @IsOptional()
   @IsString()
-  logoUrl?: string;
+  logoUrl?: string | null;
 
   @IsOptional()
   @IsString()
-  openingHours?: string;
+  openingHours?: string | null;
 }

@@ -15,7 +15,7 @@ export class UpdateBusinessDto {
   @IsOptional()
   @IsString()
   @MaxLength(500)
-  description?: string;
+  description?: string | null;
 
   @IsOptional()
   @IsString()
@@ -36,13 +36,13 @@ export class UpdateBusinessDto {
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  phone?: string | null;
 
   @IsOptional()
   @IsString()
-  logoUrl?: string;
+  logoUrl?: string | null;
 
   @IsOptional()
   @IsString()
-  openingHours?: string;
+  openingHours?: string | null;
 }
