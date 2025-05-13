@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { env } from '../../../../config/env.config';
-import { AuthService } from '../../application/services/auth.service';
 import { Provider } from '@prisma/client';
+import { ValidateOAuthUserUseCase } from '../../application/use-cases';
 
 // Define interface for Google profile
 interface GoogleProfile {
@@ -21,7 +21,7 @@ export class GoogleStrategy extends PassportStrategy(
   Strategy as any,
   'google',
 ) {
-  constructor(private authService: AuthService) {
+  constructor(private validateOAuthUserUseCase: ValidateOAuthUserUseCase) {
     super({
       clientID: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
@@ -38,7 +38,7 @@ export class GoogleStrategy extends PassportStrategy(
   ) {
     const { id, name, emails, photos } = profile;
 
-    const user = await this.authService.validateOAuthUser({
+    const user = await this.validateOAuthUserUseCase.execute({
       provider: Provider.GOOGLE,
       providerId: id,
       email: emails[0].value,

@@ -6,7 +6,6 @@ import { UsersModule } from '../users/users.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { env } from '../../config/env.config';
 import { AuthController } from './infrastructure/controllers/auth.controller';
-import { AuthService } from './application/services/auth.service';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
@@ -22,6 +21,7 @@ import {
   OAuthLoginUseCase,
   UpdateProfileUseCase,
   ChangePasswordUseCase,
+  ValidateOAuthUserUseCase,
 } from './application/use-cases';
 
 @Module({
@@ -36,7 +36,6 @@ import {
   ],
   controllers: [AuthController],
   providers: [
-    AuthService,
     AuthRepository,
     LoginUseCase,
     RegisterUseCase,
@@ -46,12 +45,13 @@ import {
     OAuthLoginUseCase,
     UpdateProfileUseCase,
     ChangePasswordUseCase,
+    ValidateOAuthUserUseCase,
     LocalStrategy,
     JwtStrategy,
     GoogleStrategy,
     AppleStrategy,
     RolesGuard,
   ],
-  exports: [AuthService, RolesGuard, AuthRepository],
+  exports: [RolesGuard, AuthRepository],
 })
 export class AuthModule {}

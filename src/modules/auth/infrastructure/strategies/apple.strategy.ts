@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-apple';
 import { env } from '../../../../config/env.config';
-import { AuthService } from '../../application/services/auth.service';
 import { Provider } from '@prisma/client';
 import { OAuthLoginDto } from '../../infrastructure/dto/oauth-login.dto';
+import { ValidateOAuthUserUseCase } from '../../application/use-cases';
 
 // Define interface for Apple profile
 interface AppleProfile {
@@ -18,7 +18,7 @@ interface AppleProfile {
 
 @Injectable()
 export class AppleStrategy extends PassportStrategy(Strategy as any, 'apple') {
-  constructor(private authService: AuthService) {
+  constructor(private validateOAuthUserUseCase: ValidateOAuthUserUseCase) {
     super({
       clientID: env.APPLE_CLIENT_ID,
       teamID: env.APPLE_CLIENT_SECRET,
@@ -60,7 +60,7 @@ export class AppleStrategy extends PassportStrategy(Strategy as any, 'apple') {
         photoUrl: undefined,
       };
 
-      const user = await this.authService.validateOAuthUser(userData);
+      const user = await this.validateOAuthUserUseCase.execute(userData);
       done(null, user);
     } catch (error) {
       done(error instanceof Error ? error : new Error('Authentication error'));
