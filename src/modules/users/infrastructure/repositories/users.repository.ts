@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { User } from '../../domain/entities/user.entity';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { User as PrismaUser } from '@prisma/client';
 
 @Injectable()
 export class UsersRepository implements IUserRepository {
@@ -12,14 +13,16 @@ export class UsersRepository implements IUserRepository {
       data: {
         email: user.email,
         name: user.name,
+        password: user.password,
+        role: user.role,
+        provider: user.provider,
+        providerId: user.providerId,
+        photoUrl: user.photoUrl,
+        businessId: user.businessId,
       },
     });
 
-    return new User({
-      id: createdUser.id.toString(),
-      email: createdUser.email,
-      name: createdUser.name,
-    });
+    return this.mapToEntity(createdUser);
   }
 
   async findById(id: string): Promise<User | null> {
@@ -29,12 +32,7 @@ export class UsersRepository implements IUserRepository {
 
     if (!user) return null;
 
-    return new User({
-      id: user.id.toString(),
-      email: user.email,
-      name: user.name,
-      businessId: user.businessId,
-    });
+    return this.mapToEntity(user);
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -44,12 +42,12 @@ export class UsersRepository implements IUserRepository {
 
     if (!user) return null;
 
-    return new User({
-      id: user.id.toString(),
-      email: user.email,
-      name: user.name,
-      businessId: user.businessId,
-    });
+    return this.mapToEntity(user);
+  }
+
+  async findAll(): Promise<User[]> {
+    const users = await this.prisma.user.findMany();
+    return users.map((user) => this.mapToEntity(user));
   }
 
   async update(id: string, userData: Partial<User>): Promise<User> {
@@ -58,21 +56,38 @@ export class UsersRepository implements IUserRepository {
       data: {
         email: userData.email,
         name: userData.name,
+        password: userData.password,
+        photoUrl: userData.photoUrl,
+        role: userData.role,
+        provider: userData.provider,
+        providerId: userData.providerId,
         businessId: userData.businessId,
       },
     });
 
-    return new User({
-      id: updatedUser.id.toString(),
-      email: updatedUser.email,
-      name: updatedUser.name,
-      businessId: updatedUser.businessId,
-    });
+    return this.mapToEntity(updatedUser);
   }
 
   async delete(id: string): Promise<void> {
     await this.prisma.user.delete({
       where: { id: parseInt(id) },
+    });
+  }
+
+  private mapToEntity(prismaUser: PrismaUser): User {
+    return new User({
+      id: prismaUser.id,
+      email: prismaUser.email,
+      name: prismaUser.name,
+      password: prismaUser.password || '',
+      photoUrl: prismaUser.photoUrl === null ? undefined : prismaUser.photoUrl,
+      role: prismaUser.role,
+      provider: prismaUser.provider,
+      providerId:
+        prismaUser.providerId === null ? undefined : prismaUser.providerId,
+      businessId: prismaUser.businessId,
+      createdAt: prismaUser.createdAt,
+      updatedAt: prismaUser.updatedAt,
     });
   }
 }

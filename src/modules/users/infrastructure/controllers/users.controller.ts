@@ -6,35 +6,76 @@ import {
   Delete,
   Body,
   Param,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
-import { UsersService } from '../services/users.service';
-import { User } from '../../domain/entities/user.entity';
+import {
+  CreateUserUseCase,
+  GetUserUseCase,
+  GetUsersUseCase,
+  UpdateUserUseCase,
+  DeleteUserUseCase,
+} from '../../application/use-cases';
 import { CreateUserDto } from '../../application/dtos/create-user.dto';
+import { UpdateUserDto } from '../../application/dtos/update-user.dto';
+import { UserResponseDto } from '../../application/dtos/user-response.dto';
+import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
+import { Roles } from '../../../auth/infrastructure/decorators/roles.decorator';
+import { Role } from '@prisma/client';
+import { GetUser } from '../../../auth/infrastructure/decorators/get-user.decorator';
+import { AuthUser } from '../../../auth/domain/interfaces/user.interface';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly createUserUseCase: CreateUserUseCase,
+    private readonly getUserUseCase: GetUserUseCase,
+    private readonly getUsersUseCase: GetUsersUseCase,
+    private readonly updateUserUseCase: UpdateUserUseCase,
+    private readonly deleteUserUseCase: DeleteUserUseCase,
+  ) {}
 
   @Post()
-  async createUser(@Body() userData: CreateUserDto): Promise<User> {
-    return this.usersService.createUser(userData);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPER_ADMIN)
+  @HttpCode(HttpStatus.CREATED)
+  async createUser(
+    @Body() userData: CreateUserDto,
+    @GetUser() currentUser: AuthUser,
+  ): Promise<UserResponseDto> {
+    return this.createUserUseCase.execute(userData, currentUser.role);
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPER_ADMIN)
+  async getUsers(): Promise<UserResponseDto[]> {
+    return this.getUsersUseCase.execute();
   }
 
   @Get(':id')
-  async getUser(@Param('id') id: string): Promise<User> {
-    return this.usersService.getUserById(id);
+  @UseGuards(JwtAuthGuard)
+  async getUser(@Param('id') id: string): Promise<UserResponseDto> {
+    return this.getUserUseCase.execute(id);
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   async updateUser(
     @Param('id') id: string,
-    @Body() userData: Partial<User>,
-  ): Promise<User> {
-    return this.usersService.updateUser(id, userData);
+    @Body() userData: UpdateUserDto,
+    @GetUser() currentUser: AuthUser,
+  ): Promise<UserResponseDto> {
+    return this.updateUserUseCase.execute(id, userData, currentUser.role);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPER_ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteUser(@Param('id') id: string): Promise<void> {
-    return this.usersService.deleteUser(id);
+    return this.deleteUserUseCase.execute(id);
   }
 }

@@ -14,7 +14,6 @@ import {
   Request,
   ParseIntPipe,
 } from '@nestjs/common';
-import { BusinessService } from '../services/business.service';
 import { CreateBusinessDto } from '../../application/dtos/create-business.dto';
 import { UpdateBusinessDto } from '../../application/dtos/update-business.dto';
 import { Business } from '../../domain/entities/business.entity';
@@ -23,7 +22,12 @@ import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
 import { Roles } from '../../../auth/infrastructure/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { AuthUser } from '../../../auth/domain/interfaces/user.interface';
-import { UsersService } from '../../../users/infrastructure/services/users.service';
+import { UsersRepository } from '../../../users/infrastructure/repositories/users.repository';
+import { CreateBusinessUseCase } from '../../application/use-cases/create-business.use-case';
+import { GetAllBusinessesUseCase } from '../../application/use-cases/get-all-businesses.use-case';
+import { GetBusinessUseCase } from '../../application/use-cases/get-business.use-case';
+import { UpdateBusinessUseCase } from '../../application/use-cases/update-business.use-case';
+import { DeleteBusinessUseCase } from '../../application/use-cases/delete-business.use-case';
 
 interface RequestWithUser extends Request {
   user: AuthUser;
@@ -32,8 +36,12 @@ interface RequestWithUser extends Request {
 @Controller('business')
 export class BusinessController {
   constructor(
-    private readonly businessService: BusinessService,
-    private readonly usersService: UsersService,
+    private readonly createBusinessUseCase: CreateBusinessUseCase,
+    private readonly getAllBusinessesUseCase: GetAllBusinessesUseCase,
+    private readonly getBusinessUseCase: GetBusinessUseCase,
+    private readonly updateBusinessUseCase: UpdateBusinessUseCase,
+    private readonly deleteBusinessUseCase: DeleteBusinessUseCase,
+    private readonly usersRepository: UsersRepository,
   ) {}
 
   @Post()
@@ -42,19 +50,19 @@ export class BusinessController {
   async createBusiness(
     @Body() createBusinessDto: CreateBusinessDto,
   ): Promise<Business> {
-    return await this.businessService.createBusiness(createBusinessDto);
+    return this.createBusinessUseCase.execute(createBusinessDto);
   }
 
   @Get()
   async getAllBusinesses(): Promise<Business[]> {
-    return await this.businessService.getAllBusinesses();
+    return this.getAllBusinessesUseCase.execute();
   }
 
   @Get(':id')
   async getBusinessById(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<Business> {
-    const business = await this.businessService.getBusinessById(id);
+    const business = await this.getBusinessUseCase.execute(id);
     if (!business) {
       throw new NotFoundException(`Business with ID ${id} not found`);
     }
@@ -72,9 +80,13 @@ export class BusinessController {
     // If the user has the BUSINESS role, we verify that they are trying to update their own business
     if (req.user.role === Role.BUSINESS) {
       // Retrieve the complete user with their relations from the database
-      const userWithRelations = await this.usersService.getUserById(
+      const userWithRelations = await this.usersRepository.findById(
         req.user.id.toString(),
       );
+
+      if (!userWithRelations) {
+        throw new NotFoundException('User not found');
+      }
 
       // If the user does not have an associated business or is trying to edit another business
       const userBusinessId = userWithRelations.businessId || 0;
@@ -85,7 +97,7 @@ export class BusinessController {
       }
     }
 
-    return await this.businessService.updateBusiness(id, updateBusinessDto);
+    return this.updateBusinessUseCase.execute(id, updateBusinessDto);
   }
 
   @Delete(':id')
@@ -93,6 +105,6 @@ export class BusinessController {
   @Roles(Role.SUPER_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBusiness(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    await this.businessService.deleteBusiness(id);
+    await this.deleteBusinessUseCase.execute(id);
   }
 }
