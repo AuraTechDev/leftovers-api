@@ -253,12 +253,11 @@ export class CloudinaryService implements OnModuleInit {
   }
 
   private clearCacheEntriesForPublicId(publicId: string): void {
-    // Delete any cache entries containing this public ID
-    // This is a simple implementation - in a real system you might want a more sophisticated approach
-    for (const [key] of this.cache.entries()) {
+    // Remove cache entries that reference the specified public ID
+    this.cache.forEach((_, key) => {
       if (key.includes(publicId)) {
         this.cache.delete(key);
       }
-    }
+    });
   }
 }
