@@ -16,6 +16,9 @@ import { CreateFoodTypeUseCase } from './application/use-cases/create-food-type.
 import { UpdateFoodTypeUseCase } from './application/use-cases/update-food-type.use-case';
 import { DeleteFoodTypeUseCase } from './application/use-cases/delete-food-type.use-case';
 import { UploadProductImageUseCase } from './application/use-cases/upload-product-image.use-case';
+import { ToggleProductFeatureUseCase } from './application/use-cases/toggle-product-feature.use-case';
+import { ToggleProductDisableUseCase } from './application/use-cases/toggle-product-disable.use-case';
+import { ProductInventoryService } from './application/services/product-inventory.service';
 
 @Module({
   imports: [PrismaModule, UsersModule, CloudinaryModule, BusinessModule],
@@ -25,6 +28,9 @@ import { UploadProductImageUseCase } from './application/use-cases/upload-produc
     ProductsRepository,
     FoodTypesRepository,
 
+    // Product services
+    ProductInventoryService,
+
     // Product use cases
     CreateProductUseCase,
     UpdateProductUseCase,
@@ -32,6 +38,8 @@ import { UploadProductImageUseCase } from './application/use-cases/upload-produc
     GetProductUseCase,
     GetAllProductsUseCase,
     UploadProductImageUseCase,
+    ToggleProductFeatureUseCase,
+    ToggleProductDisableUseCase,
 
     // Food type use cases
     GetAllFoodTypesUseCase,
@@ -39,6 +47,6 @@ import { UploadProductImageUseCase } from './application/use-cases/upload-produc
     UpdateFoodTypeUseCase,
     DeleteFoodTypeUseCase,
   ],
-  exports: [ProductsRepository],
+  exports: [ProductsRepository, ProductInventoryService],
 })
 export class ProductsModule {}

@@ -5,6 +5,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { BusinessModule } from './modules/business/business.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 import { ProductsModule } from './modules/products/products.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ProductsModule } from './modules/products/products.module';
     BusinessModule,
     CloudinaryModule,
     ProductsModule,
+    OrdersModule,
   ],
   controllers: [],
   providers: [],

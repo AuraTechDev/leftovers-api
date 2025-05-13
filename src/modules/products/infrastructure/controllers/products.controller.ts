@@ -16,6 +16,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Query,
+  Patch,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
@@ -34,6 +35,8 @@ import { GetProductUseCase } from '../../application/use-cases/get-product.use-c
 import { UpdateProductUseCase } from '../../application/use-cases/update-product.use-case';
 import { DeleteProductUseCase } from '../../application/use-cases/delete-product.use-case';
 import { UploadProductImageUseCase } from '../../application/use-cases/upload-product-image.use-case';
+import { ToggleProductFeatureUseCase } from '../../application/use-cases/toggle-product-feature.use-case';
+import { ToggleProductDisableUseCase } from '../../application/use-cases/toggle-product-disable.use-case';
 
 // Food Types Use Cases
 import { CreateFoodTypeUseCase } from '../../application/use-cases/create-food-type.use-case';
@@ -72,6 +75,8 @@ export class ProductsController {
     private readonly updateProductUseCase: UpdateProductUseCase,
     private readonly deleteProductUseCase: DeleteProductUseCase,
     private readonly uploadProductImageUseCase: UploadProductImageUseCase,
+    private readonly toggleProductFeatureUseCase: ToggleProductFeatureUseCase,
+    private readonly toggleProductDisableUseCase: ToggleProductDisableUseCase,
 
     // Food type use cases
     private readonly createFoodTypeUseCase: CreateFoodTypeUseCase,
@@ -84,6 +89,31 @@ export class ProductsController {
     private readonly businessRepository: BusinessRepository,
   ) {}
 
+  /**
+   * Helper method to validate that a business user can only modify their own business's products
+   * @throws ForbiddenException if user doesn't have access to the business
+   * @throws NotFoundException if user is not found
+   */
+  private async validateBusinessOwnership(
+    userId: number,
+    businessId: number,
+    operation: string,
+  ): Promise<void> {
+    const userWithRelations = await this.usersRepository.findById(userId);
+    if (!userWithRelations) {
+      throw new NotFoundException('User not found');
+    }
+
+    const userBusinessId = userWithRelations.businessId || 0;
+
+    // Ensure the user belongs to the business that owns the product
+    if (!userBusinessId || userBusinessId !== businessId) {
+      throw new ForbiddenException(
+        `You can only ${operation} products for your own business`,
+      );
+    }
+  }
+
   /* ========= PRODUCT ENDPOINTS ========= */
 
   @Post('products')
@@ -95,21 +125,11 @@ export class ProductsController {
   ): Promise<ProductResponseDto> {
     // If user is a BUSINESS role, ensure they're creating a product for their own business
     if (req.user.role === Role.BUSINESS) {
-      const userWithRelations = await this.usersRepository.findById(
+      await this.validateBusinessOwnership(
         req.user.id,
+        createProductDto.businessId,
+        'create',
       );
-      if (!userWithRelations) {
-        throw new NotFoundException('User not found');
-      }
-
-      const userBusinessId = userWithRelations.businessId || 0;
-
-      // Ensure the user belongs to the business they're creating a product for
-      if (!userBusinessId || userBusinessId !== createProductDto.businessId) {
-        throw new ForbiddenException(
-          'You can only create products for your own business',
-        );
-      }
     }
 
     return this.createProductUseCase.execute(createProductDto);
@@ -144,21 +164,11 @@ export class ProductsController {
 
     // If user has BUSINESS role, ensure they're updating a product from their own business
     if (req.user.role === Role.BUSINESS) {
-      const userWithRelations = await this.usersRepository.findById(
+      await this.validateBusinessOwnership(
         req.user.id,
+        product.businessId,
+        'update',
       );
-      if (!userWithRelations) {
-        throw new NotFoundException('User not found');
-      }
-
-      const userBusinessId = userWithRelations.businessId || 0;
-
-      // Ensure the user belongs to the business that owns the product
-      if (!userBusinessId || userBusinessId !== product.businessId) {
-        throw new ForbiddenException(
-          'You can only update products for your own business',
-        );
-      }
     }
 
     return this.updateProductUseCase.execute(id, updateProductDto);
@@ -177,21 +187,11 @@ export class ProductsController {
 
     // If user has BUSINESS role, ensure they're deleting a product from their own business
     if (req.user.role === Role.BUSINESS) {
-      const userWithRelations = await this.usersRepository.findById(
+      await this.validateBusinessOwnership(
         req.user.id,
+        product.businessId,
+        'delete',
       );
-      if (!userWithRelations) {
-        throw new NotFoundException('User not found');
-      }
-
-      const userBusinessId = userWithRelations.businessId || 0;
-
-      // Ensure the user belongs to the business that owns the product
-      if (!userBusinessId || userBusinessId !== product.businessId) {
-        throw new ForbiddenException(
-          'You can only delete products for your own business',
-        );
-      }
     }
 
     await this.deleteProductUseCase.execute(id);
@@ -211,21 +211,11 @@ export class ProductsController {
 
     // If user has BUSINESS role, ensure they're uploading an image for a product from their own business
     if (req.user.role === Role.BUSINESS) {
-      const userWithRelations = await this.usersRepository.findById(
+      await this.validateBusinessOwnership(
         req.user.id,
+        product.businessId,
+        'upload images for',
       );
-      if (!userWithRelations) {
-        throw new NotFoundException('User not found');
-      }
-
-      const userBusinessId = userWithRelations.businessId || 0;
-
-      // Ensure the user belongs to the business that owns the product
-      if (!userBusinessId || userBusinessId !== product.businessId) {
-        throw new ForbiddenException(
-          'You can only upload images for products of your own business',
-        );
-      }
     }
 
     if (!file) {
@@ -233,6 +223,50 @@ export class ProductsController {
     }
 
     return this.uploadProductImageUseCase.execute(id, file.buffer);
+  }
+
+  @Patch('products/:id/feature')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
+  async toggleProductFeature(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: RequestWithUser,
+  ): Promise<ProductResponseDto> {
+    // First get the product to check authorization
+    const product = await this.getProductUseCase.execute(id);
+
+    // If user has BUSINESS role, ensure they're toggling a product from their own business
+    if (req.user.role === Role.BUSINESS) {
+      await this.validateBusinessOwnership(
+        req.user.id,
+        product.businessId,
+        'update',
+      );
+    }
+
+    return this.toggleProductFeatureUseCase.execute(id);
+  }
+
+  @Patch('products/:id/disable')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
+  async toggleProductDisable(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: RequestWithUser,
+  ): Promise<ProductResponseDto> {
+    // First get the product to check authorization
+    const product = await this.getProductUseCase.execute(id);
+
+    // If user has BUSINESS role, ensure they're toggling a product from their own business
+    if (req.user.role === Role.BUSINESS) {
+      await this.validateBusinessOwnership(
+        req.user.id,
+        product.businessId,
+        'update',
+      );
+    }
+
+    return this.toggleProductDisableUseCase.execute(id);
   }
 
   /* ========= FOOD TYPE ENDPOINTS ========= */
