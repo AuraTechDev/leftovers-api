@@ -164,7 +164,6 @@ describe('AuthController', () => {
     it('should login a user', async () => {
       const req = { user: mockUser } as RequestWithUser;
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       loginUseCase.execute.mockResolvedValue(mockLoginResponse);
 
       const result = await controller.login(req);
@@ -181,7 +180,6 @@ describe('AuthController', () => {
         refreshToken: 'test-refresh-token',
       };
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       refreshTokensUseCase.execute.mockResolvedValue(mockRefreshResponse);
 
       const result = await controller.refreshTokens(refreshTokenDto);
@@ -200,7 +198,6 @@ describe('AuthController', () => {
         refreshToken: 'test-refresh-token',
       };
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       logoutUseCase.execute.mockResolvedValue(undefined);
 
       const result = await controller.logout(refreshTokenDto);
@@ -247,7 +244,6 @@ describe('AuthController', () => {
     it('should login a user after Google authentication', async () => {
       const req = { user: mockUser } as RequestWithUser;
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       oauthLoginUseCase.execute.mockResolvedValue(mockLoginResponse);
 
       const result = await controller.googleAuthCallback(req);
@@ -260,7 +256,6 @@ describe('AuthController', () => {
     it('should login a user after Apple authentication', async () => {
       const req = { user: mockUser } as RequestWithUser;
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       oauthLoginUseCase.execute.mockResolvedValue(mockLoginResponse);
 
       const result = await controller.appleAuthCallback(req);
@@ -291,7 +286,6 @@ describe('AuthController', () => {
         businessId: undefined,
       };
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       updateProfileUseCase.execute.mockResolvedValue(updatedUser);
 
       const result = await controller.updateProfile(req, updateProfileDto);
@@ -313,7 +307,6 @@ describe('AuthController', () => {
         newPassword: 'new-password',
       };
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       changePasswordUseCase.execute.mockResolvedValue(undefined);
 
       const result = await controller.changePassword(req, changePasswordDto);
