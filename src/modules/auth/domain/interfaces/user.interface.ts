@@ -7,4 +7,5 @@ export interface AuthUser {
   role: Role;
   photoUrl?: string;
   provider: Provider;
+  businessId?: string; // ID of the business it belongs to (if it has the BUSINESS role)
 }

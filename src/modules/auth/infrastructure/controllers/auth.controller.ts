@@ -7,7 +7,6 @@ import {
   UseGuards,
   Patch,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from '../../application/services/auth.service';
 import { RegisterDto } from '../dto/register.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
@@ -17,6 +16,10 @@ import { Role } from '@prisma/client';
 import { AuthUser } from '../../domain/interfaces/user.interface';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
+import { LocalAuthGuard } from '../guards/local-auth.guard';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { GoogleAuthGuard } from '../guards/google-auth.guard';
+import { AppleAuthGuard } from '../guards/apple-auth.guard';
 
 interface RequestWithUser extends Request {
   user: AuthUser;
@@ -32,7 +35,7 @@ export class AuthController {
   }
 
   @Post('login')
-  @UseGuards(AuthGuard('local'))
+  @UseGuards(LocalAuthGuard)
   login(@Req() req: RequestWithUser) {
     return this.authService.login(req.user);
   }
@@ -40,51 +43,51 @@ export class AuthController {
   // User management routes (admin only)
   @Get('admin')
   @Roles(Role.SUPER_ADMIN)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   getAdminContent() {
     return { message: 'Solo disponible para administradores' };
   }
 
   @Get('business')
   @Roles(Role.BUSINESS, Role.SUPER_ADMIN)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   getBusinessContent() {
     return { message: 'Solo disponible para business y super admin' };
   }
 
   // OAuth routes
   @Get('google')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleAuthGuard)
   googleAuth() {
     // Authentication flow is handled in the strategy
   }
 
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleAuthGuard)
   googleAuthCallback(@Req() req: RequestWithUser) {
     return this.authService.login(req.user);
   }
 
   @Get('apple')
-  @UseGuards(AuthGuard('apple'))
+  @UseGuards(AppleAuthGuard)
   appleAuth() {
     // Authentication flow is handled in the strategy
   }
 
   @Get('apple/callback')
-  @UseGuards(AuthGuard('apple'))
+  @UseGuards(AppleAuthGuard)
   appleAuthCallback(@Req() req: RequestWithUser) {
     return this.authService.login(req.user);
   }
 
   @Get('profile')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   getProfile(@Req() req: RequestWithUser) {
     return req.user;
   }
 
   @Patch('profile')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   updateProfile(
     @Req() req: RequestWithUser,
     @Body() updateProfileDto: UpdateProfileDto,
@@ -93,7 +96,7 @@ export class AuthController {
   }
 
   @Post('change-password')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   changePassword(
     @Req() req: RequestWithUser,
     @Body() changePasswordDto: ChangePasswordDto,
