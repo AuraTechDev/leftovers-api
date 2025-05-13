@@ -23,11 +23,11 @@ export class UploadBusinessLogoUseCase {
     if (business.logoUrl) {
       try {
         // Extract the public ID from the URL
-        // URL format is typically: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/public_id.jpg
-        const urlParts = business.logoUrl.split('/');
-        const fileNameWithExtension = urlParts[urlParts.length - 1];
-
-        oldLogoPublicId = fileNameWithExtension.split('.')[0];
+        // URL format: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/public_id.jpg
+        const match = business.logoUrl.match(/\/upload\/(?:v\d+\/)?(.+)\.\w+$/);
+        if (match && match[1]) {
+          oldLogoPublicId = match[1];
+        }
       } catch (error) {
         console.error('Error parsing old logo URL:', error);
       }
@@ -51,6 +51,7 @@ export class UploadBusinessLogoUseCase {
         await this.cloudinaryService.deleteImage(oldLogoPublicId);
       } catch (error) {
         console.error('Error deleting old logo:', error);
+        console.error('Failed to delete public ID:', oldLogoPublicId);
       }
     }
 
