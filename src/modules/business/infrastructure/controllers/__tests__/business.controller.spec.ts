@@ -1,23 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { BusinessController } from '../business.controller';
-import { Role, Provider } from '@prisma/client';
 import { CreateBusinessDto } from '../../../application/dtos/create-business.dto';
 import { UpdateBusinessDto } from '../../../application/dtos/update-business.dto';
-import { Business } from '../../../domain/entities/business.entity';
-import { AuthUser } from '../../../../auth/domain/interfaces/user.interface';
-import { User } from '../../../../users/domain/entities/user.entity';
 import { CreateBusinessUseCase } from '../../../application/use-cases/create-business.use-case';
 import { GetAllBusinessesUseCase } from '../../../application/use-cases/get-all-businesses.use-case';
 import { GetBusinessUseCase } from '../../../application/use-cases/get-business.use-case';
 import { UpdateBusinessUseCase } from '../../../application/use-cases/update-business.use-case';
 import { DeleteBusinessUseCase } from '../../../application/use-cases/delete-business.use-case';
 import { UsersRepository } from '../../../../users/infrastructure/repositories/users.repository';
-
-// Create RequestWithUser interface
-interface RequestWithUser extends Request {
-  user: AuthUser;
-}
+import { UploadBusinessLogoUseCase } from '../../../application/use-cases/upload-business-logo.use-case';
+import {
+  RequestWithUser,
+  UploadedFileType,
+} from '../../../__mocks__/interfaces';
+import {
+  mockBusiness,
+  mockBusinessResponse,
+  mockBusinessUser,
+  mockFile,
+  mockSuperAdmin,
+  mockUserWithBusiness,
+  mockUserWithoutBusiness,
+} from '../../../__mocks__/business.mocks';
+import { Business } from '../../../domain/entities/business.entity';
 
 describe('BusinessController', () => {
   let controller: BusinessController;
@@ -26,64 +32,8 @@ describe('BusinessController', () => {
   let getBusinessUseCase: GetBusinessUseCase;
   let updateBusinessUseCase: UpdateBusinessUseCase;
   let deleteBusinessUseCase: DeleteBusinessUseCase;
+  let uploadBusinessLogoUseCase: UploadBusinessLogoUseCase;
   let usersRepository: UsersRepository;
-
-  const mockBusiness: Business = {
-    id: 1,
-    name: 'Test Business',
-    description: 'Test Description',
-    address: '123 Test St',
-    latitude: 40.7128,
-    longitude: -74.006,
-    contactEmail: 'business@example.com',
-    phone: '555-1234',
-    logoUrl: 'https://example.com/logo.png',
-    openingHours: '9:00-17:00',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const mockSuperAdmin: AuthUser = {
-    id: 1,
-    email: 'admin@example.com',
-    name: 'Admin User',
-    role: Role.SUPER_ADMIN,
-    provider: Provider.LOCAL,
-    businessId: 1, // Same as mockBusiness.id
-  };
-
-  const mockBusinessUser: AuthUser = {
-    id: 2,
-    email: 'business@example.com',
-    name: 'Business User',
-    role: Role.BUSINESS,
-    provider: Provider.LOCAL,
-    businessId: 1, // Same as mockBusiness.id
-  };
-
-  const mockUserWithBusiness: User = {
-    id: 2,
-    email: 'business@example.com',
-    name: 'Business User',
-    password: 'hashedpassword',
-    role: Role.BUSINESS,
-    provider: Provider.LOCAL,
-    businessId: 1, // Same as mockBusiness.id
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const mockUserWithoutBusiness: User = {
-    id: 3,
-    email: 'user@example.com',
-    name: 'Regular User',
-    password: 'hashedpassword',
-    role: Role.USER,
-    provider: Provider.LOCAL,
-    businessId: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -120,6 +70,12 @@ describe('BusinessController', () => {
           },
         },
         {
+          provide: UploadBusinessLogoUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
           provide: UsersRepository,
           useValue: {
             findById: jest.fn(),
@@ -141,6 +97,9 @@ describe('BusinessController', () => {
     );
     deleteBusinessUseCase = module.get<DeleteBusinessUseCase>(
       DeleteBusinessUseCase,
+    );
+    uploadBusinessLogoUseCase = module.get<UploadBusinessLogoUseCase>(
+      UploadBusinessLogoUseCase,
     );
     usersRepository = module.get<UsersRepository>(UsersRepository);
   });
@@ -306,6 +265,92 @@ describe('BusinessController', () => {
       await controller.deleteBusiness(1);
 
       expect(executeSpy).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('uploadLogo', () => {
+    it('should upload a logo as a SUPER_ADMIN', async () => {
+      // Arrange
+      const req = { user: mockSuperAdmin } as unknown as RequestWithUser;
+      const executeSpy = jest.spyOn(uploadBusinessLogoUseCase, 'execute');
+      executeSpy.mockResolvedValue(mockBusinessResponse);
+
+      // Act
+      const result = await controller.uploadLogo(
+        1,
+        mockFile as UploadedFileType,
+        req,
+      );
+
+      // Assert
+      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer);
+      expect(result).toEqual(mockBusinessResponse);
+    });
+
+    it('should upload a logo as a BUSINESS user for their own business', async () => {
+      // Arrange
+      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
+      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      const executeSpy = jest.spyOn(uploadBusinessLogoUseCase, 'execute');
+
+      findByIdSpy.mockResolvedValue(mockUserWithBusiness);
+      executeSpy.mockResolvedValue(mockBusinessResponse);
+
+      // Act
+      const result = await controller.uploadLogo(
+        1,
+        mockFile as UploadedFileType,
+        req,
+      );
+
+      // Assert
+      expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
+      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer);
+      expect(result).toEqual(mockBusinessResponse);
+    });
+
+    it('should throw ForbiddenException when BUSINESS user tries to upload for another business', async () => {
+      // Arrange
+      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
+      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      const executeSpy = jest.spyOn(uploadBusinessLogoUseCase, 'execute');
+
+      findByIdSpy.mockResolvedValue(mockUserWithBusiness);
+
+      // Act & Assert
+      await expect(
+        controller.uploadLogo(2, mockFile as UploadedFileType, req),
+      ).rejects.toThrow(ForbiddenException);
+      expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
+      expect(executeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when user is not found', async () => {
+      // Arrange
+      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
+      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      const executeSpy = jest.spyOn(uploadBusinessLogoUseCase, 'execute');
+
+      findByIdSpy.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        controller.uploadLogo(1, mockFile as UploadedFileType, req),
+      ).rejects.toThrow(NotFoundException);
+      expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
+      expect(executeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when no file is uploaded', async () => {
+      // Arrange
+      const req = { user: mockSuperAdmin } as unknown as RequestWithUser;
+      const executeSpy = jest.spyOn(uploadBusinessLogoUseCase, 'execute');
+
+      // Act & Assert
+      await expect(
+        controller.uploadLogo(1, null as unknown as UploadedFileType, req),
+      ).rejects.toThrow(NotFoundException);
+      expect(executeSpy).not.toHaveBeenCalled();
     });
   });
 });
