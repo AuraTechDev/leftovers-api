@@ -1,14 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { BusinessController } from '../business.controller';
-import { BusinessService } from '../../services/business.service';
-import { UsersService } from '../../../../users/infrastructure/services/users.service';
 import { Role, Provider } from '@prisma/client';
 import { CreateBusinessDto } from '../../../application/dtos/create-business.dto';
 import { UpdateBusinessDto } from '../../../application/dtos/update-business.dto';
 import { Business } from '../../../domain/entities/business.entity';
 import { AuthUser } from '../../../../auth/domain/interfaces/user.interface';
 import { User } from '../../../../users/domain/entities/user.entity';
+import { CreateBusinessUseCase } from '../../../application/use-cases/create-business.use-case';
+import { GetAllBusinessesUseCase } from '../../../application/use-cases/get-all-businesses.use-case';
+import { GetBusinessUseCase } from '../../../application/use-cases/get-business.use-case';
+import { UpdateBusinessUseCase } from '../../../application/use-cases/update-business.use-case';
+import { DeleteBusinessUseCase } from '../../../application/use-cases/delete-business.use-case';
+import { UsersRepository } from '../../../../users/infrastructure/repositories/users.repository';
 
 // Create RequestWithUser interface
 interface RequestWithUser extends Request {
@@ -17,8 +21,12 @@ interface RequestWithUser extends Request {
 
 describe('BusinessController', () => {
   let controller: BusinessController;
-  let businessService: BusinessService;
-  let usersService: UsersService;
+  let createBusinessUseCase: CreateBusinessUseCase;
+  let getAllBusinessesUseCase: GetAllBusinessesUseCase;
+  let getBusinessUseCase: GetBusinessUseCase;
+  let updateBusinessUseCase: UpdateBusinessUseCase;
+  let deleteBusinessUseCase: DeleteBusinessUseCase;
+  let usersRepository: UsersRepository;
 
   const mockBusiness: Business = {
     id: 1,
@@ -54,20 +62,24 @@ describe('BusinessController', () => {
   };
 
   const mockUserWithBusiness: User = {
-    id: '2',
+    id: 2,
     email: 'business@example.com',
     name: 'Business User',
     password: 'hashedpassword',
+    role: Role.BUSINESS,
+    provider: Provider.LOCAL,
     businessId: 1, // Same as mockBusiness.id
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
   const mockUserWithoutBusiness: User = {
-    id: '3',
+    id: 3,
     email: 'user@example.com',
     name: 'Regular User',
     password: 'hashedpassword',
+    role: Role.USER,
+    provider: Provider.LOCAL,
     businessId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -78,27 +90,59 @@ describe('BusinessController', () => {
       controllers: [BusinessController],
       providers: [
         {
-          provide: BusinessService,
+          provide: CreateBusinessUseCase,
           useValue: {
-            createBusiness: jest.fn(),
-            getAllBusinesses: jest.fn(),
-            getBusinessById: jest.fn(),
-            updateBusiness: jest.fn(),
-            deleteBusiness: jest.fn(),
+            execute: jest.fn(),
           },
         },
         {
-          provide: UsersService,
+          provide: GetAllBusinessesUseCase,
           useValue: {
-            getUserById: jest.fn(),
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: GetBusinessUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: UpdateBusinessUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: DeleteBusinessUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: UsersRepository,
+          useValue: {
+            findById: jest.fn(),
           },
         },
       ],
     }).compile();
 
     controller = module.get<BusinessController>(BusinessController);
-    businessService = module.get<BusinessService>(BusinessService);
-    usersService = module.get<UsersService>(UsersService);
+    createBusinessUseCase = module.get<CreateBusinessUseCase>(
+      CreateBusinessUseCase,
+    );
+    getAllBusinessesUseCase = module.get<GetAllBusinessesUseCase>(
+      GetAllBusinessesUseCase,
+    );
+    getBusinessUseCase = module.get<GetBusinessUseCase>(GetBusinessUseCase);
+    updateBusinessUseCase = module.get<UpdateBusinessUseCase>(
+      UpdateBusinessUseCase,
+    );
+    deleteBusinessUseCase = module.get<DeleteBusinessUseCase>(
+      DeleteBusinessUseCase,
+    );
+    usersRepository = module.get<UsersRepository>(UsersRepository);
   });
 
   it('should be defined', () => {
@@ -115,47 +159,47 @@ describe('BusinessController', () => {
         contactEmail: 'new@example.com',
       };
 
-      const createSpy = jest.spyOn(businessService, 'createBusiness');
-      createSpy.mockResolvedValue(mockBusiness);
+      const executeSpy = jest.spyOn(createBusinessUseCase, 'execute');
+      executeSpy.mockResolvedValue(mockBusiness);
 
       const result = await controller.createBusiness(createBusinessDto);
 
-      expect(createSpy).toHaveBeenCalledWith(createBusinessDto);
+      expect(executeSpy).toHaveBeenCalledWith(createBusinessDto);
       expect(result).toEqual(mockBusiness);
     });
   });
 
   describe('getAllBusinesses', () => {
     it('should return all businesses', async () => {
-      const getAllSpy = jest.spyOn(businessService, 'getAllBusinesses');
-      getAllSpy.mockResolvedValue([mockBusiness]);
+      const executeSpy = jest.spyOn(getAllBusinessesUseCase, 'execute');
+      executeSpy.mockResolvedValue([mockBusiness]);
 
       const result = await controller.getAllBusinesses();
 
-      expect(getAllSpy).toHaveBeenCalled();
+      expect(executeSpy).toHaveBeenCalled();
       expect(result).toEqual([mockBusiness]);
     });
   });
 
   describe('getBusinessById', () => {
     it('should return a business by id', async () => {
-      const getByIdSpy = jest.spyOn(businessService, 'getBusinessById');
-      getByIdSpy.mockResolvedValue(mockBusiness);
+      const executeSpy = jest.spyOn(getBusinessUseCase, 'execute');
+      executeSpy.mockResolvedValue(mockBusiness);
 
       const result = await controller.getBusinessById(1);
 
-      expect(getByIdSpy).toHaveBeenCalledWith(1);
+      expect(executeSpy).toHaveBeenCalledWith(1);
       expect(result).toEqual(mockBusiness);
     });
 
     it('should throw NotFoundException when business is not found', async () => {
-      const getByIdSpy = jest.spyOn(businessService, 'getBusinessById');
-      getByIdSpy.mockResolvedValue(null);
+      const executeSpy = jest.spyOn(getBusinessUseCase, 'execute');
+      executeSpy.mockResolvedValue(null as unknown as Business);
 
       await expect(controller.getBusinessById(999)).rejects.toThrow(
         NotFoundException,
       );
-      expect(getByIdSpy).toHaveBeenCalledWith(999);
+      expect(executeSpy).toHaveBeenCalledWith(999);
     });
   });
 
@@ -168,8 +212,8 @@ describe('BusinessController', () => {
     it('should allow SUPER_ADMIN to update any business', async () => {
       const req = { user: mockSuperAdmin } as unknown as RequestWithUser;
 
-      const updateSpy = jest.spyOn(businessService, 'updateBusiness');
-      updateSpy.mockResolvedValue({
+      const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
+      executeSpy.mockResolvedValue({
         ...mockBusiness,
         name: updateBusinessDto.name!,
         description: updateBusinessDto.description!,
@@ -177,7 +221,7 @@ describe('BusinessController', () => {
 
       const result = await controller.updateBusiness(1, updateBusinessDto, req);
 
-      expect(updateSpy).toHaveBeenCalledWith(1, updateBusinessDto);
+      expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto);
       expect(result.name).toEqual(updateBusinessDto.name);
       expect(result.description).toEqual(updateBusinessDto.description);
     });
@@ -185,11 +229,11 @@ describe('BusinessController', () => {
     it('should allow BUSINESS user to update their own business', async () => {
       const req = { user: mockBusinessUser } as unknown as RequestWithUser;
 
-      const getUserByIdSpy = jest.spyOn(usersService, 'getUserById');
-      getUserByIdSpy.mockResolvedValue(mockUserWithBusiness);
+      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      findByIdSpy.mockResolvedValue(mockUserWithBusiness);
 
-      const updateSpy = jest.spyOn(businessService, 'updateBusiness');
-      updateSpy.mockResolvedValue({
+      const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
+      executeSpy.mockResolvedValue({
         ...mockBusiness,
         name: updateBusinessDto.name!,
         description: updateBusinessDto.description!,
@@ -197,8 +241,8 @@ describe('BusinessController', () => {
 
       const result = await controller.updateBusiness(1, updateBusinessDto, req);
 
-      expect(getUserByIdSpy).toHaveBeenCalledWith('2');
-      expect(updateSpy).toHaveBeenCalledWith(1, updateBusinessDto);
+      expect(findByIdSpy).toHaveBeenCalledWith('2');
+      expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto);
       expect(result.name).toEqual(updateBusinessDto.name);
       expect(result.description).toEqual(updateBusinessDto.description);
     });
@@ -206,17 +250,17 @@ describe('BusinessController', () => {
     it('should prevent BUSINESS user from updating other businesses', async () => {
       const req = { user: mockBusinessUser } as unknown as RequestWithUser;
 
-      const getUserByIdSpy = jest.spyOn(usersService, 'getUserById');
-      getUserByIdSpy.mockResolvedValue(mockUserWithBusiness);
+      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      findByIdSpy.mockResolvedValue(mockUserWithBusiness);
 
-      const updateSpy = jest.spyOn(businessService, 'updateBusiness');
+      const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
 
       await expect(
         controller.updateBusiness(999, updateBusinessDto, req),
       ).rejects.toThrow(ForbiddenException);
 
-      expect(getUserByIdSpy).toHaveBeenCalledWith('2');
-      expect(updateSpy).not.toHaveBeenCalled();
+      expect(findByIdSpy).toHaveBeenCalledWith('2');
+      expect(executeSpy).not.toHaveBeenCalled();
     });
 
     it('should prevent BUSINESS user without a business from updating any business', async () => {
@@ -224,28 +268,44 @@ describe('BusinessController', () => {
         user: { ...mockBusinessUser, businessId: undefined },
       } as unknown as RequestWithUser;
 
-      const getUserByIdSpy = jest.spyOn(usersService, 'getUserById');
-      getUserByIdSpy.mockResolvedValue(mockUserWithoutBusiness);
+      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      findByIdSpy.mockResolvedValue(mockUserWithoutBusiness);
 
-      const updateSpy = jest.spyOn(businessService, 'updateBusiness');
+      const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
 
       await expect(
         controller.updateBusiness(1, updateBusinessDto, req),
       ).rejects.toThrow(ForbiddenException);
 
-      expect(getUserByIdSpy).toHaveBeenCalledWith('2');
-      expect(updateSpy).not.toHaveBeenCalled();
+      expect(findByIdSpy).toHaveBeenCalledWith('2');
+      expect(executeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle user not found', async () => {
+      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
+
+      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      findByIdSpy.mockResolvedValue(null);
+
+      const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
+
+      await expect(
+        controller.updateBusiness(1, updateBusinessDto, req),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(findByIdSpy).toHaveBeenCalledWith('2');
+      expect(executeSpy).not.toHaveBeenCalled();
     });
   });
 
   describe('deleteBusiness', () => {
     it('should delete a business', async () => {
-      const deleteSpy = jest.spyOn(businessService, 'deleteBusiness');
-      deleteSpy.mockResolvedValue(undefined);
+      const executeSpy = jest.spyOn(deleteBusinessUseCase, 'execute');
+      executeSpy.mockResolvedValue(undefined);
 
       await controller.deleteBusiness(1);
 
-      expect(deleteSpy).toHaveBeenCalledWith(1);
+      expect(executeSpy).toHaveBeenCalledWith(1);
     });
   });
 });
