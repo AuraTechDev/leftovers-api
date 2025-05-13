@@ -1,12 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Role, Provider } from '@prisma/client';
 import { AuthController } from '../../controllers/auth.controller';
-import { AuthService } from '../../../application/services/auth.service';
+import { AuthUser } from '../../../domain/interfaces/user.interface';
 import { RegisterDto } from '../../dto/register.dto';
 import { RefreshTokenDto } from '../../dto/refresh-token.dto';
-import { AuthUser } from '../../../domain/interfaces/user.interface';
 import { UpdateProfileDto } from '../../dto/update-profile.dto';
 import { ChangePasswordDto } from '../../dto/change-password.dto';
+import {
+  LoginUseCase,
+  RegisterUseCase,
+  RefreshTokensUseCase,
+  LogoutUseCase,
+  OAuthLoginUseCase,
+  UpdateProfileUseCase,
+  ChangePasswordUseCase,
+} from '../../../application/use-cases';
+import {
+  AuthResponseDto,
+  UserDto,
+} from '../../../application/dtos/auth-response.dto';
 
 // Create RequestWithUser interface
 interface RequestWithUser extends Request {
@@ -15,7 +27,13 @@ interface RequestWithUser extends Request {
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let authService: AuthService;
+  let loginUseCase: jest.Mocked<LoginUseCase>;
+  let registerUseCase: jest.Mocked<RegisterUseCase>;
+  let refreshTokensUseCase: jest.Mocked<RefreshTokensUseCase>;
+  let logoutUseCase: jest.Mocked<LogoutUseCase>;
+  let oauthLoginUseCase: jest.Mocked<OAuthLoginUseCase>;
+  let updateProfileUseCase: jest.Mocked<UpdateProfileUseCase>;
+  let changePasswordUseCase: jest.Mocked<ChangePasswordUseCase>;
 
   const mockUser: AuthUser = {
     id: 1,
@@ -27,25 +45,7 @@ describe('AuthController', () => {
   };
 
   // For register responses where Prisma model expects string | null
-  const mockRegisterResponse = {
-    user: {
-      id: mockUser.id,
-      email: mockUser.email,
-      name: mockUser.name,
-      role: mockUser.role,
-      photoUrl: mockUser.photoUrl || null,
-      provider: mockUser.provider,
-      providerId: null,
-      businessId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    accessToken: 'test-token',
-    refreshToken: 'test-refresh-token',
-  };
-
-  // Create a mock login response that matches expected type
-  const mockLoginResponse = {
+  const mockRegisterResponse: AuthResponseDto = {
     user: {
       id: mockUser.id,
       email: mockUser.email,
@@ -53,6 +53,22 @@ describe('AuthController', () => {
       role: mockUser.role,
       photoUrl: mockUser.photoUrl,
       provider: mockUser.provider,
+      businessId: undefined,
+    },
+    accessToken: 'test-token',
+    refreshToken: 'test-refresh-token',
+  };
+
+  // Create a mock login response that matches expected type
+  const mockLoginResponse: AuthResponseDto = {
+    user: {
+      id: mockUser.id,
+      email: mockUser.email,
+      name: mockUser.name,
+      role: mockUser.role,
+      photoUrl: mockUser.photoUrl,
+      provider: mockUser.provider,
+      businessId: undefined,
     },
     accessToken: 'test-token',
     refreshToken: 'test-refresh-token',
@@ -68,22 +84,58 @@ describe('AuthController', () => {
       controllers: [AuthController],
       providers: [
         {
-          provide: AuthService,
+          provide: LoginUseCase,
           useValue: {
-            register: jest.fn(),
-            login: jest.fn(),
-            validateUser: jest.fn(),
-            refreshTokens: jest.fn(),
-            logout: jest.fn(),
-            updateProfile: jest.fn(),
-            changePassword: jest.fn(),
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: RegisterUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: RefreshTokensUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: LogoutUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: OAuthLoginUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: UpdateProfileUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: ChangePasswordUseCase,
+          useValue: {
+            execute: jest.fn(),
           },
         },
       ],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
-    authService = module.get<AuthService>(AuthService);
+    loginUseCase = module.get(LoginUseCase);
+    registerUseCase = module.get(RegisterUseCase);
+    refreshTokensUseCase = module.get(RefreshTokensUseCase);
+    logoutUseCase = module.get(LogoutUseCase);
+    oauthLoginUseCase = module.get(OAuthLoginUseCase);
+    updateProfileUseCase = module.get(UpdateProfileUseCase);
+    changePasswordUseCase = module.get(ChangePasswordUseCase);
   });
 
   it('should be defined', () => {
@@ -98,12 +150,12 @@ describe('AuthController', () => {
         password: 'password123',
       };
 
-      const registerSpy = jest.spyOn(authService, 'register');
-      registerSpy.mockResolvedValue(mockRegisterResponse);
+      registerUseCase.execute.mockResolvedValue(mockRegisterResponse);
 
       const result = await controller.register(registerDto);
 
-      expect(registerSpy).toHaveBeenCalledWith(registerDto);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(registerUseCase.execute).toHaveBeenCalledWith(registerDto);
       expect(result).toEqual(mockRegisterResponse);
     });
   });
@@ -112,12 +164,13 @@ describe('AuthController', () => {
     it('should login a user', async () => {
       const req = { user: mockUser } as RequestWithUser;
 
-      const loginSpy = jest.spyOn(authService, 'login');
-      loginSpy.mockResolvedValue(mockLoginResponse);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      loginUseCase.execute.mockResolvedValue(mockLoginResponse);
 
       const result = await controller.login(req);
 
-      expect(loginSpy).toHaveBeenCalledWith(mockUser);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(loginUseCase.execute).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);
     });
   });
@@ -128,12 +181,13 @@ describe('AuthController', () => {
         refreshToken: 'test-refresh-token',
       };
 
-      const refreshTokensSpy = jest.spyOn(authService, 'refreshTokens');
-      refreshTokensSpy.mockResolvedValue(mockRefreshResponse);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      refreshTokensUseCase.execute.mockResolvedValue(mockRefreshResponse);
 
       const result = await controller.refreshTokens(refreshTokenDto);
 
-      expect(refreshTokensSpy).toHaveBeenCalledWith(
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(refreshTokensUseCase.execute).toHaveBeenCalledWith(
         refreshTokenDto.refreshToken,
       );
       expect(result).toEqual(mockRefreshResponse);
@@ -146,12 +200,15 @@ describe('AuthController', () => {
         refreshToken: 'test-refresh-token',
       };
 
-      const logoutSpy = jest.spyOn(authService, 'logout');
-      logoutSpy.mockResolvedValue(undefined);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      logoutUseCase.execute.mockResolvedValue(undefined);
 
       const result = await controller.logout(refreshTokenDto);
 
-      expect(logoutSpy).toHaveBeenCalledWith(refreshTokenDto.refreshToken);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(logoutUseCase.execute).toHaveBeenCalledWith(
+        refreshTokenDto.refreshToken,
+      );
       expect(result).toEqual({ message: 'Logged out successfully' });
     });
   });
@@ -190,24 +247,26 @@ describe('AuthController', () => {
     it('should login a user after Google authentication', async () => {
       const req = { user: mockUser } as RequestWithUser;
 
-      const loginSpy = jest.spyOn(authService, 'login');
-      loginSpy.mockResolvedValue(mockLoginResponse);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      oauthLoginUseCase.execute.mockResolvedValue(mockLoginResponse);
 
       const result = await controller.googleAuthCallback(req);
 
-      expect(loginSpy).toHaveBeenCalledWith(mockUser);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(oauthLoginUseCase.execute).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);
     });
 
     it('should login a user after Apple authentication', async () => {
       const req = { user: mockUser } as RequestWithUser;
 
-      const loginSpy = jest.spyOn(authService, 'login');
-      loginSpy.mockResolvedValue(mockLoginResponse);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      oauthLoginUseCase.execute.mockResolvedValue(mockLoginResponse);
 
       const result = await controller.appleAuthCallback(req);
 
-      expect(loginSpy).toHaveBeenCalledWith(mockUser);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(oauthLoginUseCase.execute).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);
     });
   });
@@ -222,25 +281,23 @@ describe('AuthController', () => {
       };
 
       // Mocked response from service with required User properties
-      const updatedUser = {
+      const updatedUser: UserDto = {
         id: mockUser.id,
         name: updateProfileDto.name!,
         email: updateProfileDto.email!,
-        photoUrl: updateProfileDto.photoUrl || null,
+        photoUrl: updateProfileDto.photoUrl,
         role: mockUser.role,
         provider: mockUser.provider,
-        providerId: null,
-        businessId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        businessId: undefined,
       };
 
-      const updateProfileSpy = jest.spyOn(authService, 'updateProfile');
-      updateProfileSpy.mockResolvedValue(updatedUser);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      updateProfileUseCase.execute.mockResolvedValue(updatedUser);
 
       const result = await controller.updateProfile(req, updateProfileDto);
 
-      expect(updateProfileSpy).toHaveBeenCalledWith(
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(updateProfileUseCase.execute).toHaveBeenCalledWith(
         mockUser.id,
         updateProfileDto,
       );
@@ -256,20 +313,17 @@ describe('AuthController', () => {
         newPassword: 'new-password',
       };
 
-      const serviceResponse = {
-        message: 'Contraseña actualizada exitosamente',
-      };
-
-      const changePasswordSpy = jest.spyOn(authService, 'changePassword');
-      changePasswordSpy.mockResolvedValue(serviceResponse);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      changePasswordUseCase.execute.mockResolvedValue(undefined);
 
       const result = await controller.changePassword(req, changePasswordDto);
 
-      expect(changePasswordSpy).toHaveBeenCalledWith(
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(changePasswordUseCase.execute).toHaveBeenCalledWith(
         mockUser.id,
         changePasswordDto,
       );
-      expect(result).toEqual(serviceResponse);
+      expect(result).toEqual(undefined);
     });
   });
 });

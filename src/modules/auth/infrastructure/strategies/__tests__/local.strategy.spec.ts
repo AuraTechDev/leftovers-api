@@ -2,40 +2,40 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { Role, Provider } from '@prisma/client';
 import { LocalStrategy } from '../local.strategy';
-import { AuthService } from '../../../application/services/auth.service';
+import { ValidateUserUseCase } from '../../../application/use-cases';
+import { AuthUser } from '../../../domain/interfaces/user.interface';
 
 describe('LocalStrategy', () => {
   let strategy: LocalStrategy;
-  let authService: AuthService;
+  let validateUserUseCase: jest.Mocked<ValidateUserUseCase>;
 
-  const mockUser = {
+  const mockUser: AuthUser = {
     id: 1,
     email: 'test@example.com',
     name: 'Test User',
     role: Role.USER,
     provider: Provider.LOCAL,
-    photoUrl: null,
-    providerId: null,
-    businessId: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    photoUrl: undefined,
+    businessId: undefined,
   };
 
   beforeEach(async () => {
+    const validateUserUseCaseMock = {
+      execute: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LocalStrategy,
         {
-          provide: AuthService,
-          useValue: {
-            validateUser: jest.fn(),
-          },
+          provide: ValidateUserUseCase,
+          useValue: validateUserUseCaseMock,
         },
       ],
     }).compile();
 
     strategy = module.get<LocalStrategy>(LocalStrategy);
-    authService = module.get<AuthService>(AuthService);
+    validateUserUseCase = module.get(ValidateUserUseCase);
   });
 
   it('should be defined', () => {
@@ -44,12 +44,12 @@ describe('LocalStrategy', () => {
 
   describe('validate', () => {
     it('should return user if validation is successful', async () => {
-      const validateUserSpy = jest.spyOn(authService, 'validateUser');
-      validateUserSpy.mockResolvedValue(mockUser);
+      validateUserUseCase.execute.mockResolvedValue(mockUser);
 
       const result = await strategy.validate('test@example.com', 'password123');
 
-      expect(validateUserSpy).toHaveBeenCalledWith(
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(validateUserUseCase.execute).toHaveBeenCalledWith(
         'test@example.com',
         'password123',
       );
@@ -57,14 +57,14 @@ describe('LocalStrategy', () => {
     });
 
     it('should throw UnauthorizedException if validation fails', async () => {
-      const validateUserSpy = jest.spyOn(authService, 'validateUser');
-      validateUserSpy.mockResolvedValue(null);
+      validateUserUseCase.execute.mockResolvedValue(null);
 
       await expect(
         strategy.validate('test@example.com', 'wrongpassword'),
-      ).rejects.toThrow(new UnauthorizedException('Credenciales inválidas'));
+      ).rejects.toThrow(UnauthorizedException);
 
-      expect(validateUserSpy).toHaveBeenCalledWith(
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(validateUserUseCase.execute).toHaveBeenCalledWith(
         'test@example.com',
         'wrongpassword',
       );

@@ -66,7 +66,10 @@ describe('UpdateBusinessUseCase', () => {
     const result = await useCase.execute(1, updateBusinessDto);
 
     expect(findByIdSpy).toHaveBeenCalledWith(1);
-    expect(updateSpy).toHaveBeenCalledWith(1, updateBusinessDto);
+    expect(updateSpy).toHaveBeenCalledWith(1, {
+      ...mockBusiness,
+      ...updateBusinessDto,
+    });
     expect(result).toEqual(updatedBusiness);
   });
 

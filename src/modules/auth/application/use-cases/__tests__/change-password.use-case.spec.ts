@@ -7,10 +7,9 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ChangePasswordDto } from '../../../infrastructure/dto/change-password.dto';
 import * as bcrypt from 'bcryptjs';
 
-// Mock para bcrypt
 jest.mock('bcryptjs', () => ({
   compare: jest.fn(),
-  hash: jest.fn().mockResolvedValue('new-hashed-password'),
+  hash: jest.fn(),
 }));
 
 describe('ChangePasswordUseCase', () => {
@@ -35,6 +34,11 @@ describe('ChangePasswordUseCase', () => {
 
     useCase = module.get<ChangePasswordUseCase>(ChangePasswordUseCase);
     authRepository = module.get(AuthRepository);
+
+    jest.clearAllMocks();
+    (bcrypt.hash as jest.Mock).mockImplementation(() =>
+      Promise.resolve('new-hashed-password'),
+    );
   });
 
   it('should be defined', () => {
