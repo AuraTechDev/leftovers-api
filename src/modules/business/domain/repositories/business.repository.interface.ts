@@ -5,10 +5,10 @@ export interface IBusinessRepository {
     business: Omit<Business, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<Business>;
   findAll(): Promise<Business[]>;
-  findById(id: string): Promise<Business | null>;
+  findById(id: number): Promise<Business | null>;
   update(
-    id: string,
+    id: number,
     business: Partial<Omit<Business, 'id' | 'createdAt' | 'updatedAt'>>,
   ): Promise<Business>;
-  delete(id: string): Promise<void>;
+  delete(id: number): Promise<void>;
 }

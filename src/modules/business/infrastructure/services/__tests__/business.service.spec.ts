@@ -18,7 +18,7 @@ describe('BusinessService', () => {
   let deleteBusinessUseCase: DeleteBusinessUseCase;
 
   const mockBusiness: Business = {
-    id: '1',
+    id: 1,
     name: 'Test Business',
     description: 'Test Description',
     address: '123 Test St',
@@ -126,9 +126,9 @@ describe('BusinessService', () => {
       const executeSpy = jest.spyOn(getBusinessUseCase, 'execute');
       executeSpy.mockResolvedValue(mockBusiness);
 
-      const result = await service.getBusinessById('1');
+      const result = await service.getBusinessById(1);
 
-      expect(executeSpy).toHaveBeenCalledWith('1');
+      expect(executeSpy).toHaveBeenCalledWith(1);
       expect(result).toEqual(mockBusiness);
     });
   });
@@ -149,9 +149,9 @@ describe('BusinessService', () => {
       const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
       executeSpy.mockResolvedValue(updatedBusiness);
 
-      const result = await service.updateBusiness('1', updateBusinessDto);
+      const result = await service.updateBusiness(1, updateBusinessDto);
 
-      expect(executeSpy).toHaveBeenCalledWith('1', updateBusinessDto);
+      expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto);
       expect(result).toEqual(updatedBusiness);
     });
   });
@@ -161,9 +161,9 @@ describe('BusinessService', () => {
       const executeSpy = jest.spyOn(deleteBusinessUseCase, 'execute');
       executeSpy.mockResolvedValue(undefined);
 
-      await service.deleteBusiness('1');
+      await service.deleteBusiness(1);
 
-      expect(executeSpy).toHaveBeenCalledWith('1');
+      expect(executeSpy).toHaveBeenCalledWith(1);
     });
   });
 });

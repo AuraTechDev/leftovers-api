@@ -8,7 +8,7 @@ describe('CreateBusinessUseCase', () => {
   let businessRepository: BusinessRepository;
 
   const mockBusiness = {
-    id: '1',
+    id: 1,
     name: 'Test Business',
     description: 'Test Description',
     address: '123 Test St',

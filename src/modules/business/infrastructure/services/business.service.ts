@@ -27,18 +27,18 @@ export class BusinessService implements IBusinessService {
     return await this.getAllBusinessesUseCase.execute();
   }
 
-  async getBusinessById(id: string): Promise<Business | null> {
+  async getBusinessById(id: number): Promise<Business | null> {
     return await this.getBusinessUseCase.execute(id);
   }
 
   async updateBusiness(
-    id: string,
+    id: number,
     business: Partial<Omit<Business, 'id' | 'createdAt' | 'updatedAt'>>,
   ): Promise<Business> {
     return await this.updateBusinessUseCase.execute(id, business);
   }
 
-  async deleteBusiness(id: string): Promise<void> {
+  async deleteBusiness(id: number): Promise<void> {
     await this.deleteBusinessUseCase.execute(id);
   }
 }

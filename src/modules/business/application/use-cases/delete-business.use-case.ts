@@ -5,7 +5,7 @@ import { BusinessRepository } from '../../infrastructure/repositories/business.r
 export class DeleteBusinessUseCase {
   constructor(private readonly businessRepository: BusinessRepository) {}
 
-  async execute(id: string): Promise<void> {
+  async execute(id: number): Promise<void> {
     const business = await this.businessRepository.findById(id);
     if (!business) {
       throw new NotFoundException(`Business with ID ${id} not found`);

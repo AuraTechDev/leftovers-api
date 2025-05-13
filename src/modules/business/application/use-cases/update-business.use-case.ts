@@ -8,7 +8,7 @@ export class UpdateBusinessUseCase {
   constructor(private readonly businessRepository: BusinessRepository) {}
 
   async execute(
-    id: string,
+    id: number,
     updateBusinessDto: UpdateBusinessDto,
   ): Promise<Business> {
     const business = await this.businessRepository.findById(id);

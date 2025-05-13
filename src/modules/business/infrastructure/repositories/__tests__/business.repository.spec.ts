@@ -7,7 +7,7 @@ describe('BusinessRepository', () => {
   let repository: BusinessRepository;
 
   const mockPrismaBusiness = {
-    id: '1',
+    id: 1,
     name: 'Test Business',
     description: 'Test Description',
     address: '123 Test St',
@@ -89,10 +89,10 @@ describe('BusinessRepository', () => {
     it('should find a business by id', async () => {
       mockPrisma.business.findUnique.mockResolvedValue(mockPrismaBusiness);
 
-      const result = await repository.findById('1');
+      const result = await repository.findById(1);
 
       expect(mockPrisma.business.findUnique).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: { id: 1 },
       });
       expect(result).toEqual(mockPrismaBusiness);
     });
@@ -100,10 +100,10 @@ describe('BusinessRepository', () => {
     it('should return null when business not found', async () => {
       mockPrisma.business.findUnique.mockResolvedValue(null);
 
-      const result = await repository.findById('999');
+      const result = await repository.findById(999);
 
       expect(mockPrisma.business.findUnique).toHaveBeenCalledWith({
-        where: { id: '999' },
+        where: { id: 999 },
       });
       expect(result).toBeNull();
     });
@@ -123,10 +123,10 @@ describe('BusinessRepository', () => {
 
       mockPrisma.business.update.mockResolvedValue(updatedBusiness);
 
-      const result = await repository.update('1', updateData);
+      const result = await repository.update(1, updateData);
 
       expect(mockPrisma.business.update).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: { id: 1 },
         data: updateData,
       });
       expect(result).toEqual(updatedBusiness);
@@ -137,10 +137,10 @@ describe('BusinessRepository', () => {
     it('should delete a business', async () => {
       mockPrisma.business.delete.mockResolvedValue(mockPrismaBusiness);
 
-      await repository.delete('1');
+      await repository.delete(1);
 
       expect(mockPrisma.business.delete).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: { id: 1 },
       });
     });
   });

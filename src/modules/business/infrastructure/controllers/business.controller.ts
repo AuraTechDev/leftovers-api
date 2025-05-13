@@ -12,6 +12,7 @@ import {
   UseGuards,
   ForbiddenException,
   Request,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { BusinessService } from '../services/business.service';
 import { CreateBusinessDto } from '../../application/dtos/create-business.dto';
@@ -50,7 +51,9 @@ export class BusinessController {
   }
 
   @Get(':id')
-  async getBusinessById(@Param('id') id: string): Promise<Business> {
+  async getBusinessById(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Business> {
     const business = await this.businessService.getBusinessById(id);
     if (!business) {
       throw new NotFoundException(`Business with ID ${id} not found`);
@@ -62,7 +65,7 @@ export class BusinessController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
   async updateBusiness(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateBusinessDto: UpdateBusinessDto,
     @Request() req: RequestWithUser,
   ): Promise<Business> {
@@ -74,7 +77,7 @@ export class BusinessController {
       );
 
       // If the user does not have an associated business or is trying to edit another business
-      const userBusinessId = userWithRelations.businessId || '';
+      const userBusinessId = userWithRelations.businessId || 0;
       if (!userBusinessId || userBusinessId !== id) {
         throw new ForbiddenException(
           'Solo puedes actualizar tu propio negocio',
@@ -89,7 +92,7 @@ export class BusinessController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteBusiness(@Param('id') id: string): Promise<void> {
+  async deleteBusiness(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.businessService.deleteBusiness(id);
   }
 }

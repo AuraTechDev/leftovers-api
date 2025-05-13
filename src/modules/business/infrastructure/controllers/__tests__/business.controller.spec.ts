@@ -21,7 +21,7 @@ describe('BusinessController', () => {
   let usersService: UsersService;
 
   const mockBusiness: Business = {
-    id: '1',
+    id: 1,
     name: 'Test Business',
     description: 'Test Description',
     address: '123 Test St',
@@ -41,7 +41,7 @@ describe('BusinessController', () => {
     name: 'Admin User',
     role: Role.SUPER_ADMIN,
     provider: Provider.LOCAL,
-    businessId: '1', // Same as mockBusiness.id
+    businessId: 1, // Same as mockBusiness.id
   };
 
   const mockBusinessUser: AuthUser = {
@@ -50,7 +50,7 @@ describe('BusinessController', () => {
     name: 'Business User',
     role: Role.BUSINESS,
     provider: Provider.LOCAL,
-    businessId: '1', // Same as mockBusiness.id
+    businessId: 1, // Same as mockBusiness.id
   };
 
   const mockUserWithBusiness: User = {
@@ -58,7 +58,7 @@ describe('BusinessController', () => {
     email: 'business@example.com',
     name: 'Business User',
     password: 'hashedpassword',
-    businessId: '1', // Same as mockBusiness.id
+    businessId: 1, // Same as mockBusiness.id
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -142,9 +142,9 @@ describe('BusinessController', () => {
       const getByIdSpy = jest.spyOn(businessService, 'getBusinessById');
       getByIdSpy.mockResolvedValue(mockBusiness);
 
-      const result = await controller.getBusinessById('1');
+      const result = await controller.getBusinessById(1);
 
-      expect(getByIdSpy).toHaveBeenCalledWith('1');
+      expect(getByIdSpy).toHaveBeenCalledWith(1);
       expect(result).toEqual(mockBusiness);
     });
 
@@ -152,10 +152,10 @@ describe('BusinessController', () => {
       const getByIdSpy = jest.spyOn(businessService, 'getBusinessById');
       getByIdSpy.mockResolvedValue(null);
 
-      await expect(controller.getBusinessById('999')).rejects.toThrow(
+      await expect(controller.getBusinessById(999)).rejects.toThrow(
         NotFoundException,
       );
-      expect(getByIdSpy).toHaveBeenCalledWith('999');
+      expect(getByIdSpy).toHaveBeenCalledWith(999);
     });
   });
 
@@ -175,13 +175,9 @@ describe('BusinessController', () => {
         description: updateBusinessDto.description!,
       });
 
-      const result = await controller.updateBusiness(
-        '1',
-        updateBusinessDto,
-        req,
-      );
+      const result = await controller.updateBusiness(1, updateBusinessDto, req);
 
-      expect(updateSpy).toHaveBeenCalledWith('1', updateBusinessDto);
+      expect(updateSpy).toHaveBeenCalledWith(1, updateBusinessDto);
       expect(result.name).toEqual(updateBusinessDto.name);
       expect(result.description).toEqual(updateBusinessDto.description);
     });
@@ -199,14 +195,10 @@ describe('BusinessController', () => {
         description: updateBusinessDto.description!,
       });
 
-      const result = await controller.updateBusiness(
-        '1',
-        updateBusinessDto,
-        req,
-      );
+      const result = await controller.updateBusiness(1, updateBusinessDto, req);
 
       expect(getUserByIdSpy).toHaveBeenCalledWith('2');
-      expect(updateSpy).toHaveBeenCalledWith('1', updateBusinessDto);
+      expect(updateSpy).toHaveBeenCalledWith(1, updateBusinessDto);
       expect(result.name).toEqual(updateBusinessDto.name);
       expect(result.description).toEqual(updateBusinessDto.description);
     });
@@ -220,7 +212,7 @@ describe('BusinessController', () => {
       const updateSpy = jest.spyOn(businessService, 'updateBusiness');
 
       await expect(
-        controller.updateBusiness('999', updateBusinessDto, req),
+        controller.updateBusiness(999, updateBusinessDto, req),
       ).rejects.toThrow(ForbiddenException);
 
       expect(getUserByIdSpy).toHaveBeenCalledWith('2');
@@ -238,7 +230,7 @@ describe('BusinessController', () => {
       const updateSpy = jest.spyOn(businessService, 'updateBusiness');
 
       await expect(
-        controller.updateBusiness('1', updateBusinessDto, req),
+        controller.updateBusiness(1, updateBusinessDto, req),
       ).rejects.toThrow(ForbiddenException);
 
       expect(getUserByIdSpy).toHaveBeenCalledWith('2');
@@ -251,9 +243,9 @@ describe('BusinessController', () => {
       const deleteSpy = jest.spyOn(businessService, 'deleteBusiness');
       deleteSpy.mockResolvedValue(undefined);
 
-      await controller.deleteBusiness('1');
+      await controller.deleteBusiness(1);
 
-      expect(deleteSpy).toHaveBeenCalledWith('1');
+      expect(deleteSpy).toHaveBeenCalledWith(1);
     });
   });
 });

@@ -5,10 +5,10 @@ export interface IBusinessService {
     business: Omit<Business, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<Business>;
   getAllBusinesses(): Promise<Business[]>;
-  getBusinessById(id: string): Promise<Business | null>;
+  getBusinessById(id: number): Promise<Business | null>;
   updateBusiness(
-    id: string,
+    id: number,
     business: Partial<Omit<Business, 'id' | 'createdAt' | 'updatedAt'>>,
   ): Promise<Business>;
-  deleteBusiness(id: string): Promise<void>;
+  deleteBusiness(id: number): Promise<void>;
 }

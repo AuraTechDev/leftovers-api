@@ -26,7 +26,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
   Business      Business?      @relation(fields: [businessId], references: [id])
-  businessId    String?
+  businessId    Int?
 }
 
 model RefreshToken {
@@ -40,7 +40,7 @@ model RefreshToken {
 }
 
 model Business {
-  id           String    @id @default(uuid())
+  id           Int       @id @default(autoincrement())
   name         String
   description  String?
   address      String
@@ -63,7 +63,7 @@ model Product {
   price       Float
   quantity    Int
   imageUrl    String?
-  businessId  String
+  businessId  Int
   business    Business @relation(fields: [businessId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

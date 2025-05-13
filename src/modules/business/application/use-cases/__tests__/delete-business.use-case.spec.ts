@@ -8,7 +8,7 @@ describe('DeleteBusinessUseCase', () => {
   let businessRepository: BusinessRepository;
 
   const mockBusiness = {
-    id: '1',
+    id: 1,
     name: 'Test Business',
     description: 'Test Description',
     address: '123 Test St',
@@ -51,10 +51,10 @@ describe('DeleteBusinessUseCase', () => {
     findByIdSpy.mockResolvedValue(mockBusiness);
     deleteSpy.mockResolvedValue(undefined);
 
-    await useCase.execute('1');
+    await useCase.execute(1);
 
-    expect(findByIdSpy).toHaveBeenCalledWith('1');
-    expect(deleteSpy).toHaveBeenCalledWith('1');
+    expect(findByIdSpy).toHaveBeenCalledWith(1);
+    expect(deleteSpy).toHaveBeenCalledWith(1);
   });
 
   it('should throw NotFoundException when business not found', async () => {
@@ -63,8 +63,8 @@ describe('DeleteBusinessUseCase', () => {
 
     findByIdSpy.mockResolvedValue(null);
 
-    await expect(useCase.execute('999')).rejects.toThrow(NotFoundException);
-    expect(findByIdSpy).toHaveBeenCalledWith('999');
+    await expect(useCase.execute(999)).rejects.toThrow(NotFoundException);
+    expect(findByIdSpy).toHaveBeenCalledWith(999);
     expect(deleteSpy).not.toHaveBeenCalled();
   });
 });

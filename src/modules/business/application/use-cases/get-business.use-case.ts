@@ -6,7 +6,7 @@ import { Business } from '../../domain/entities/business.entity';
 export class GetBusinessUseCase {
   constructor(private readonly businessRepository: BusinessRepository) {}
 
-  async execute(id: string): Promise<Business> {
+  async execute(id: number): Promise<Business> {
     const business = await this.businessRepository.findById(id);
     if (!business) {
       throw new NotFoundException(`Business with ID ${id} not found`);

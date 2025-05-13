@@ -19,14 +19,14 @@ export class BusinessRepository implements IBusinessRepository {
     return await this.prisma.business.findMany();
   }
 
-  async findById(id: string): Promise<Business | null> {
+  async findById(id: number): Promise<Business | null> {
     return await this.prisma.business.findUnique({
       where: { id },
     });
   }
 
   async update(
-    id: string,
+    id: number,
     business: Partial<Omit<Business, 'id' | 'createdAt' | 'updatedAt'>>,
   ): Promise<Business> {
     return await this.prisma.business.update({
@@ -35,7 +35,7 @@ export class BusinessRepository implements IBusinessRepository {
     });
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: number): Promise<void> {
     await this.prisma.business.delete({
       where: { id },
     });

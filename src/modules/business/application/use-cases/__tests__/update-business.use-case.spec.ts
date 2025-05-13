@@ -9,7 +9,7 @@ describe('UpdateBusinessUseCase', () => {
   let businessRepository: BusinessRepository;
 
   const mockBusiness = {
-    id: '1',
+    id: 1,
     name: 'Test Business',
     description: 'Test Description',
     address: '123 Test St',
@@ -63,10 +63,10 @@ describe('UpdateBusinessUseCase', () => {
     findByIdSpy.mockResolvedValue(mockBusiness);
     updateSpy.mockResolvedValue(updatedBusiness);
 
-    const result = await useCase.execute('1', updateBusinessDto);
+    const result = await useCase.execute(1, updateBusinessDto);
 
-    expect(findByIdSpy).toHaveBeenCalledWith('1');
-    expect(updateSpy).toHaveBeenCalledWith('1', updateBusinessDto);
+    expect(findByIdSpy).toHaveBeenCalledWith(1);
+    expect(updateSpy).toHaveBeenCalledWith(1, updateBusinessDto);
     expect(result).toEqual(updatedBusiness);
   });
 
@@ -80,10 +80,10 @@ describe('UpdateBusinessUseCase', () => {
 
     findByIdSpy.mockResolvedValue(null);
 
-    await expect(useCase.execute('999', updateBusinessDto)).rejects.toThrow(
+    await expect(useCase.execute(999, updateBusinessDto)).rejects.toThrow(
       NotFoundException,
     );
-    expect(findByIdSpy).toHaveBeenCalledWith('999');
+    expect(findByIdSpy).toHaveBeenCalledWith(999);
     expect(updateSpy).not.toHaveBeenCalled();
   });
 });

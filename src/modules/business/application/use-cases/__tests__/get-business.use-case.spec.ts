@@ -8,7 +8,7 @@ describe('GetBusinessUseCase', () => {
   let businessRepository: BusinessRepository;
 
   const mockBusiness = {
-    id: '1',
+    id: 1,
     name: 'Test Business',
     description: 'Test Description',
     address: '123 Test St',
@@ -47,9 +47,9 @@ describe('GetBusinessUseCase', () => {
     const findByIdSpy = jest.spyOn(businessRepository, 'findById');
     findByIdSpy.mockResolvedValue(mockBusiness);
 
-    const result = await useCase.execute('1');
+    const result = await useCase.execute(1);
 
-    expect(findByIdSpy).toHaveBeenCalledWith('1');
+    expect(findByIdSpy).toHaveBeenCalledWith(1);
     expect(result).toEqual(mockBusiness);
   });
 
@@ -57,7 +57,7 @@ describe('GetBusinessUseCase', () => {
     const findByIdSpy = jest.spyOn(businessRepository, 'findById');
     findByIdSpy.mockResolvedValue(null);
 
-    await expect(useCase.execute('999')).rejects.toThrow(NotFoundException);
-    expect(findByIdSpy).toHaveBeenCalledWith('999');
+    await expect(useCase.execute(999)).rejects.toThrow(NotFoundException);
+    expect(findByIdSpy).toHaveBeenCalledWith(999);
   });
 });
