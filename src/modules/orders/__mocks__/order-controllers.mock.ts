@@ -1,9 +1,23 @@
 import { OrderStatus, Provider, Role } from '@prisma/client';
 import { AuthUser } from '../../auth/domain/interfaces/user.interface';
 import { CreateOrderDto } from '../application/dtos/create-order.dto';
+import { UpdateOrderStatusDto } from '../application/dtos/update-order-status.dto';
+import { GetOrdersQueryDto } from '../application/dtos/get-orders-query.dto';
 
-// Mock the CreateOrderUseCase
+// Mock the use cases
 export const createMockCreateOrderUseCase = () => ({
+  execute: jest.fn(),
+});
+
+export const createMockUpdateOrderStatusUseCase = () => ({
+  execute: jest.fn(),
+});
+
+export const createMockGetUserOrdersUseCase = () => ({
+  execute: jest.fn(),
+});
+
+export const createMockGetBusinessOrdersUseCase = () => ({
   execute: jest.fn(),
 });
 
@@ -21,12 +35,35 @@ export interface MockOrderResponse {
   [key: string]: any;
 }
 
+// Type for paginated orders response
+export interface MockPaginatedOrdersResponse {
+  data: MockOrderResponse[];
+  meta: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
+
 // Create a mock user
 export const createMockUser = (override: Partial<AuthUser> = {}): AuthUser => ({
   id: 123,
   email: 'test@example.com',
   name: 'Test User',
   role: Role.USER,
+  provider: Provider.LOCAL,
+  ...override,
+});
+
+// Create a mock business user
+export const createMockBusinessUser = (
+  override: Partial<AuthUser> = {},
+): AuthUser => ({
+  id: 2,
+  email: 'business@example.com',
+  name: 'Business User',
+  role: Role.BUSINESS,
   provider: Provider.LOCAL,
   ...override,
 });
@@ -40,6 +77,23 @@ export const createMockOrderDto = (
   businessId: 2,
   quantity: 3,
   pickupTime: new Date(),
+  ...override,
+});
+
+// Create a mock update order status DTO
+export const createMockUpdateOrderStatusDto = (
+  override: Partial<UpdateOrderStatusDto> = {},
+): UpdateOrderStatusDto => ({
+  status: OrderStatus.IN_PROCESS,
+  ...override,
+});
+
+// Create a mock order query DTO
+export const createMockOrdersQueryDto = (
+  override: Partial<GetOrdersQueryDto> = {},
+): GetOrdersQueryDto => ({
+  page: 1,
+  pageSize: 10,
   ...override,
 });
 
@@ -59,6 +113,22 @@ export const createMockOrderResponse = (
   ...override,
 });
 
+// Create a mock paginated orders response
+export const createMockPaginatedOrdersResponse = (
+  orders: MockOrderResponse[] = [createMockOrderResponse()],
+  page = 1,
+  pageSize = 10,
+  totalItems = 1,
+): MockPaginatedOrdersResponse => ({
+  data: orders,
+  meta: {
+    page,
+    pageSize,
+    totalItems,
+    totalPages: Math.ceil(totalItems / pageSize),
+  },
+});
+
 // Simple helper function that directly simulates controller behavior
 export const simulateCreateOrder = (
   useCase: { execute: (dto: CreateOrderDto) => Promise<MockOrderResponse> },
@@ -68,4 +138,50 @@ export const simulateCreateOrder = (
   // Apply the same logic as the controller
   dto.userId = userId;
   return useCase.execute(dto);
+};
+
+// Helper for simulating updateOrderStatus
+export const simulateUpdateOrderStatus = (
+  useCase: {
+    execute: (
+      id: number,
+      dto: UpdateOrderStatusDto,
+      userId: number,
+      userRole: Role,
+    ) => Promise<MockOrderResponse>;
+  },
+  id: number,
+  dto: UpdateOrderStatusDto,
+  userId: number,
+  userRole: Role,
+): Promise<MockOrderResponse> => {
+  return useCase.execute(id, dto, userId, userRole);
+};
+
+// Helper for simulating getUserOrders
+export const simulateGetUserOrders = (
+  useCase: {
+    execute: (
+      userId: number,
+      query: GetOrdersQueryDto,
+    ) => Promise<MockPaginatedOrdersResponse>;
+  },
+  userId: number,
+  query: GetOrdersQueryDto,
+): Promise<MockPaginatedOrdersResponse> => {
+  return useCase.execute(userId, query);
+};
+
+// Helper for simulating getBusinessOrders
+export const simulateGetBusinessOrders = (
+  useCase: {
+    execute: (
+      businessId: number,
+      query: GetOrdersQueryDto,
+    ) => Promise<MockPaginatedOrdersResponse>;
+  },
+  businessId: number,
+  query: GetOrdersQueryDto,
+): Promise<MockPaginatedOrdersResponse> => {
+  return useCase.execute(businessId, query);
 };

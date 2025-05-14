@@ -83,6 +83,9 @@ describe('CreateOrderUseCase', () => {
         },
         order: {
           create: jest.fn().mockResolvedValue(mockCreatedOrder),
+          update: jest.fn(),
+          findMany: jest.fn(),
+          count: jest.fn(),
         },
       };
 
@@ -127,6 +130,9 @@ describe('CreateOrderUseCase', () => {
             user: { id: 1, name: 'Test User' },
             business: { id: 3, name: 'Test Business' },
           })),
+          update: jest.fn(),
+          findMany: jest.fn(),
+          count: jest.fn(),
         },
       };
 
@@ -169,6 +175,9 @@ describe('CreateOrderUseCase', () => {
             user: { id: 1, name: 'Test User' },
             business: { id: 3, name: 'Test Business' },
           })),
+          update: jest.fn(),
+          findMany: jest.fn(),
+          count: jest.fn(),
         },
       };
 

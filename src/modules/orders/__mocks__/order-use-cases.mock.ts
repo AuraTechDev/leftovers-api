@@ -8,6 +8,9 @@ export type MockPrismaClient = {
   };
   order: {
     create: jest.Mock<any, any>;
+    update: jest.Mock<any, any>;
+    findMany: jest.Mock<any, any>;
+    count: jest.Mock<any, any>;
   };
 };
 
@@ -74,9 +77,23 @@ export const createMockPrismaService = () => ({
         },
         order: {
           create: jest.fn(),
+          update: jest.fn(),
+          findMany: jest.fn(),
+          count: jest.fn(),
         },
       }),
   ),
+  order: {
+    create: jest.fn(),
+    update: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    count: jest.fn(),
+  },
+  product: {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+  },
 });
 
 // Mock Orders Repository
@@ -86,6 +103,9 @@ export const createMockOrdersRepository = () => ({
   findById: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
+  updateStatus: jest.fn(),
+  findPaginatedByUser: jest.fn(),
+  findPaginatedByBusiness: jest.fn(),
 });
 
 // Mock Product Inventory Service
@@ -112,4 +132,13 @@ export const createMockOrder = (
   user: { id: 1, name: 'Test User' },
   business: { id: 3, name: 'Test Business' },
   ...override,
+});
+
+// Mock paginated orders result
+export const createMockPaginatedOrdersResult = (
+  orders: OrderResult[] = [createMockOrder()],
+  total = 1,
+) => ({
+  orders,
+  total,
 });

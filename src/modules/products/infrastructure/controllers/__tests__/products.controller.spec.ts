@@ -220,7 +220,7 @@ describe('ProductsController', () => {
 
       it('should return products for specific business when businessId is provided', async () => {
         // Arrange
-        const businessId = 1;
+        const businessId = '1';
         const mockProducts = createMockProductsArray();
         mockProductUseCases.getAllProductsUseCase.execute.mockResolvedValue(
           mockProducts,
@@ -232,7 +232,7 @@ describe('ProductsController', () => {
         // Assert
         expect(
           mockProductUseCases.getAllProductsUseCase.execute,
-        ).toHaveBeenCalledWith(businessId);
+        ).toHaveBeenCalledWith(parseInt(businessId, 10));
         expect(result).toEqual(mockProducts);
       });
     });
