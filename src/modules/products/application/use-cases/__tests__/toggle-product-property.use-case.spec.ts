@@ -2,32 +2,24 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ToggleProductPropertyUseCase } from '../toggle-product-property.use-case';
 import { ProductsRepository } from '../../../infrastructure/repositories/products.repository';
 import { NotFoundException } from '@nestjs/common';
+import {
+  createMockProduct,
+  createFeaturedProduct,
+  createDisabledProduct,
+  createMockProductsRepository,
+} from '../../../__mocks__/product-use-cases.mock';
+
+// Type for mock products repository
+type MockProductsRepository = ReturnType<typeof createMockProductsRepository>;
 
 describe('ToggleProductPropertyUseCase', () => {
   let useCase: ToggleProductPropertyUseCase;
-  let productsRepository: ProductsRepository;
-
-  const mockProductsRepository = {
-    findById: jest.fn(),
-    update: jest.fn(),
-  };
-
-  const mockProduct = {
-    id: 1,
-    name: 'Test Product',
-    description: 'Description',
-    price: 10.0,
-    quantity: 5,
-    imageUrl: null,
-    isFeatured: false,
-    isDisabled: false,
-    foodTypeId: null,
-    businessId: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  let mockProductsRepository: MockProductsRepository;
 
   beforeEach(async () => {
+    // Create mock repository
+    mockProductsRepository = createMockProductsRepository();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ToggleProductPropertyUseCase,
@@ -41,7 +33,6 @@ describe('ToggleProductPropertyUseCase', () => {
     useCase = module.get<ToggleProductPropertyUseCase>(
       ToggleProductPropertyUseCase,
     );
-    productsRepository = module.get<ProductsRepository>(ProductsRepository);
   });
 
   afterEach(() => {
@@ -55,8 +46,9 @@ describe('ToggleProductPropertyUseCase', () => {
   describe('execute', () => {
     it('should toggle isFeatured property from false to true', async () => {
       // Arrange
-      mockProductsRepository.findById.mockResolvedValue(mockProduct);
-      const updatedProduct = { ...mockProduct, isFeatured: true };
+      const product = createMockProduct();
+      mockProductsRepository.findById.mockResolvedValue(product);
+      const updatedProduct = { ...product, isFeatured: true };
       mockProductsRepository.update.mockResolvedValue(updatedProduct);
 
       // Act
@@ -72,9 +64,9 @@ describe('ToggleProductPropertyUseCase', () => {
 
     it('should toggle isFeatured property from true to false', async () => {
       // Arrange
-      const featuredProduct = { ...mockProduct, isFeatured: true };
-      mockProductsRepository.findById.mockResolvedValue(featuredProduct);
-      const updatedProduct = { ...featuredProduct, isFeatured: false };
+      const product = createFeaturedProduct();
+      mockProductsRepository.findById.mockResolvedValue(product);
+      const updatedProduct = { ...product, isFeatured: false };
       mockProductsRepository.update.mockResolvedValue(updatedProduct);
 
       // Act
@@ -90,8 +82,9 @@ describe('ToggleProductPropertyUseCase', () => {
 
     it('should toggle isDisabled property from false to true', async () => {
       // Arrange
-      mockProductsRepository.findById.mockResolvedValue(mockProduct);
-      const updatedProduct = { ...mockProduct, isDisabled: true };
+      const product = createMockProduct();
+      mockProductsRepository.findById.mockResolvedValue(product);
+      const updatedProduct = { ...product, isDisabled: true };
       mockProductsRepository.update.mockResolvedValue(updatedProduct);
 
       // Act
@@ -107,9 +100,9 @@ describe('ToggleProductPropertyUseCase', () => {
 
     it('should toggle isDisabled property from true to false', async () => {
       // Arrange
-      const disabledProduct = { ...mockProduct, isDisabled: true };
-      mockProductsRepository.findById.mockResolvedValue(disabledProduct);
-      const updatedProduct = { ...disabledProduct, isDisabled: false };
+      const product = createDisabledProduct();
+      mockProductsRepository.findById.mockResolvedValue(product);
+      const updatedProduct = { ...product, isDisabled: false };
       mockProductsRepository.update.mockResolvedValue(updatedProduct);
 
       // Act

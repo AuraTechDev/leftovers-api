@@ -1,5 +1,3 @@
-import { Prisma } from '@prisma/client';
-
 // Define the Product model structure for mocking
 export interface MockProduct {
   id: number;
