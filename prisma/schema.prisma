@@ -28,6 +28,7 @@ model User {
   Business      Business?      @relation(fields: [businessId], references: [id])
   businessId    Int?
   Order         Order[]
+  ratings       Rating[]
 }
 
 model RefreshToken {
@@ -56,6 +57,7 @@ model Business {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   Order        Order[]
+  ratings      Rating[]
 }
 
 model Product {
@@ -72,6 +74,7 @@ model Product {
   businessId  Int
   business    Business  @relation(fields: [businessId], references: [id])
   orders      Order[]   @relation("ProductOrders")
+  ratings     Rating[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -97,6 +100,22 @@ model Order {
   pickupTime DateTime
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+}
+
+model Rating {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  productId  Int
+  product    Product  @relation(fields: [productId], references: [id])
+  businessId Int
+  business   Business @relation(fields: [businessId], references: [id])
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, productId]) // Ensure a user can only rate a product once
 }
 
 enum Role {
