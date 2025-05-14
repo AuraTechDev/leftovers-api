@@ -24,10 +24,7 @@ import { GetOrdersQueryDto } from '../../application/dtos/get-orders-query.dto';
 import { GetUserOrdersUseCase } from '../../application/use-cases/get-user-orders.use-case';
 import { GetBusinessOrdersUseCase } from '../../application/use-cases/get-business-orders.use-case';
 import { PaginatedOrdersResponseDto } from '../../application/dtos/paginated-orders-response.dto';
-
-interface RequestWithUser extends Request {
-  user: AuthUser;
-}
+import { GetUser } from '../../../auth/infrastructure/decorators/get-user.decorator';
 
 @Controller('orders')
 export class OrdersController {
@@ -42,11 +39,11 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard)
   async createOrder(
     @Body() createOrderDto: CreateOrderDto,
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ): Promise<OrderResponseDto> {
     // Set the user ID from the authenticated user
     // This ensures users can only create orders for themselves
-    createOrderDto.userId = req.user.id;
+    createOrderDto.userId = currentUser.id;
 
     return this.createOrderUseCase.execute(createOrderDto);
   }
@@ -57,34 +54,34 @@ export class OrdersController {
   async updateOrderStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateOrderStatusDto: UpdateOrderStatusDto,
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ): Promise<OrderResponseDto> {
     return this.updateOrderStatusUseCase.execute(
       id,
       updateOrderStatusDto,
-      req.user.id,
-      req.user.role,
+      currentUser.id,
+      currentUser.role,
     );
   }
 
   @Get('user')
   @UseGuards(JwtAuthGuard)
   async getUserOrders(
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
     @Query() query: GetOrdersQueryDto,
   ): Promise<PaginatedOrdersResponseDto> {
-    return this.getUserOrdersUseCase.execute(req.user.id, query);
+    return this.getUserOrdersUseCase.execute(currentUser.id, query);
   }
 
   @Get('business')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.BUSINESS, Role.SUPER_ADMIN)
   async getBusinessOrders(
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
     @Query() query: GetOrdersQueryDto,
   ): Promise<PaginatedOrdersResponseDto> {
     // For super admin, we'd need another approach, possibly requiring a businessId parameter
     // For now, we're just using the user ID which for BUSINESS role is the business ID
-    return this.getBusinessOrdersUseCase.execute(req.user.id, query);
+    return this.getBusinessOrdersUseCase.execute(currentUser.id, query);
   }
 }

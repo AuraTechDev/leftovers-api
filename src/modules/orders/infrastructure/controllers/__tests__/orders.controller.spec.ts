@@ -82,9 +82,7 @@ describe('OrdersController', () => {
         .mockResolvedValue(mockResponse);
 
       // Execute
-      const result = await controller.createOrder(mockOrderDto, {
-        user: mockUser,
-      } as unknown as any);
+      const result = await controller.createOrder(mockOrderDto, mockUser);
 
       // Assert
       expect(mockOrderDto.userId).toEqual(mockUser.id);
@@ -109,9 +107,11 @@ describe('OrdersController', () => {
         .mockResolvedValue(mockResponse);
 
       // Execute
-      const result = await controller.updateOrderStatus(orderId, updateDto, {
-        user: mockUser,
-      } as unknown as any);
+      const result = await controller.updateOrderStatus(
+        orderId,
+        updateDto,
+        mockUser,
+      );
 
       // Assert
       expect(executeSpy).toHaveBeenCalledWith(
@@ -137,10 +137,7 @@ describe('OrdersController', () => {
         .mockResolvedValue(mockResponse);
 
       // Execute
-      const result = await controller.getUserOrders(
-        { user: mockUser } as unknown as any,
-        query,
-      );
+      const result = await controller.getUserOrders(mockUser, query);
 
       // Assert
       expect(executeSpy).toHaveBeenCalledWith(mockUser.id, query);
@@ -161,10 +158,7 @@ describe('OrdersController', () => {
         .mockResolvedValue(mockResponse);
 
       // Execute
-      const result = await controller.getBusinessOrders(
-        { user: mockUser } as unknown as any,
-        query,
-      );
+      const result = await controller.getBusinessOrders(mockUser, query);
 
       // Assert
       expect(executeSpy).toHaveBeenCalledWith(mockUser.id, query);
