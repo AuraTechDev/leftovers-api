@@ -119,6 +119,18 @@ model Rating {
   @@unique([userId, productId]) // Ensure a user can only rate a product once
 }
 
+model DiscoverSection {
+  id          Int         @id @default(autoincrement())
+  title       String
+  slug        String      @unique
+  type        SectionType
+  queryConfig Json?
+  isActive    Boolean     @default(true)
+  priority    Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
 enum Role {
   SUPER_ADMIN
   BUSINESS
@@ -136,4 +148,9 @@ enum OrderStatus {
   IN_PROCESS
   COMPLETED
   CANCELLED
+}
+
+enum SectionType {
+  PRODUCTS
+  BUSINESSES
 }
