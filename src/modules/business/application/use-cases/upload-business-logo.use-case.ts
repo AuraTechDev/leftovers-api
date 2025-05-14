@@ -22,9 +22,8 @@ export class UploadBusinessLogoUseCase {
 
     if (business.logoUrl) {
       try {
-        // Extract the public ID from the URL
-        // URL format: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/public_id.jpg
         const match = business.logoUrl.match(/\/upload\/(?:v\d+\/)?(.+)\.\w+$/);
+
         if (match && match[1]) {
           oldLogoPublicId = match[1];
         }
@@ -45,7 +44,6 @@ export class UploadBusinessLogoUseCase {
 
     const result = await this.businessRepository.update(id, updatedBusiness);
 
-    // Delete the old logo if it exists
     if (oldLogoPublicId) {
       try {
         await this.cloudinaryService.deleteImage(oldLogoPublicId);
@@ -55,7 +53,6 @@ export class UploadBusinessLogoUseCase {
       }
     }
 
-    // Return the updated business
     return BusinessResponseDto.fromEntity(result);
   }
 }
