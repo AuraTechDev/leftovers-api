@@ -59,7 +59,6 @@ describe('UploadBusinessLogoUseCase', () => {
     });
 
     // Setup the mock to return our response
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     jest
       .spyOn(cloudinaryImageService, 'uploadEntityImage')
       .mockResolvedValue(responseDto);
@@ -83,7 +82,6 @@ describe('UploadBusinessLogoUseCase', () => {
   it('should throw NotFoundException when business not found', async () => {
     // Arrange
     // Setup mock to throw error that will be caught and converted to NotFoundException
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     jest
       .spyOn(cloudinaryImageService, 'uploadEntityImage')
       .mockImplementation(() => {
@@ -101,7 +99,6 @@ describe('UploadBusinessLogoUseCase', () => {
     const testError = new Error('Test error');
 
     // Setup mock to throw a generic error
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     jest
       .spyOn(cloudinaryImageService, 'uploadEntityImage')
       .mockImplementation(() => {
