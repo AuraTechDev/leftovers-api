@@ -20,7 +20,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:clear": "jest --clearCache",
     "test:unit": "jest --testRegex \"\\.spec\\.ts$\"",
-    "test:ci": "jest --ci --coverage --maxWorkers=2"
+    "test:ci": "jest --ci --coverage --maxWorkers=2",
+    "test:summary": "jest --verbose=false --silent"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
