@@ -194,7 +194,7 @@ describe('UploadProductImageUseCase', () => {
       expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
       expect(consoleErrorSpy).toHaveBeenNthCalledWith(
         1,
-        'Error deleting old logo:',
+        'Error deleting old product image:',
         deleteError,
       );
       expect(consoleErrorSpy).toHaveBeenNthCalledWith(

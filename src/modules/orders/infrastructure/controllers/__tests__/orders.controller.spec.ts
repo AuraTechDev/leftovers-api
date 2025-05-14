@@ -1,40 +1,68 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrdersController } from '../orders.controller';
 import { CreateOrderUseCase } from '../../../application/use-cases/create-order.use-case';
+import { UpdateOrderStatusUseCase } from '../../../application/use-cases/update-order-status.use-case';
+import { GetUserOrdersUseCase } from '../../../application/use-cases/get-user-orders.use-case';
+import { GetBusinessOrdersUseCase } from '../../../application/use-cases/get-business-orders.use-case';
+import { OrderStatus } from '@prisma/client';
 import {
-  createMockCreateOrderUseCase,
   createMockUser,
+  createMockBusinessUser,
   createMockOrderDto,
+  createMockUpdateOrderStatusDto,
+  createMockOrdersQueryDto,
   createMockOrderResponse,
-  simulateCreateOrder,
+  createMockPaginatedOrdersResponse,
 } from '../../../__mocks__/order-controllers.mock';
-
-// Define type for our use case mock
-type MockCreateOrderUseCase = ReturnType<typeof createMockCreateOrderUseCase>;
 
 describe('OrdersController', () => {
   let controller: OrdersController;
-  let mockCreateOrderUseCase: MockCreateOrderUseCase;
+  let createOrderUseCase: CreateOrderUseCase;
+  let updateOrderStatusUseCase: UpdateOrderStatusUseCase;
+  let getUserOrdersUseCase: GetUserOrdersUseCase;
+  let getBusinessOrdersUseCase: GetBusinessOrdersUseCase;
 
   beforeEach(async () => {
-    // Create the mock use case
-    mockCreateOrderUseCase = createMockCreateOrderUseCase();
-
     const module: TestingModule = await Test.createTestingModule({
       controllers: [OrdersController],
       providers: [
         {
           provide: CreateOrderUseCase,
-          useValue: mockCreateOrderUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: UpdateOrderStatusUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: GetUserOrdersUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: GetBusinessOrdersUseCase,
+          useValue: {
+            execute: jest.fn(),
+          },
         },
       ],
     }).compile();
 
     controller = module.get<OrdersController>(OrdersController);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
+    createOrderUseCase = module.get<CreateOrderUseCase>(CreateOrderUseCase);
+    updateOrderStatusUseCase = module.get<UpdateOrderStatusUseCase>(
+      UpdateOrderStatusUseCase,
+    );
+    getUserOrdersUseCase =
+      module.get<GetUserOrdersUseCase>(GetUserOrdersUseCase);
+    getBusinessOrdersUseCase = module.get<GetBusinessOrdersUseCase>(
+      GetBusinessOrdersUseCase,
+    );
   });
 
   it('should be defined', () => {
@@ -42,49 +70,105 @@ describe('OrdersController', () => {
   });
 
   describe('createOrder', () => {
-    // Create mocks using the factory functions
-    const orderDto = createMockOrderDto();
-    const mockedUser = createMockUser();
-    const mockOrderResponse = createMockOrderResponse({
-      userId: mockedUser.id,
-    });
-
     it('should set userId from authenticated user and call createOrderUseCase', async () => {
-      // Arrange
-      mockCreateOrderUseCase.execute.mockResolvedValue(mockOrderResponse);
-      const dtoToUse = { ...orderDto };
+      // Mock data
+      const mockUser = createMockUser();
+      const mockOrderDto = createMockOrderDto();
+      const mockResponse = createMockOrderResponse();
 
-      // Act - simulate controller behavior directly
-      const result = await simulateCreateOrder(
-        mockCreateOrderUseCase,
-        dtoToUse,
-        mockedUser.id,
+      // Setup mocks
+      const executeSpy = jest
+        .spyOn(createOrderUseCase, 'execute')
+        .mockResolvedValue(mockResponse);
+
+      // Execute
+      const result = await controller.createOrder(mockOrderDto, {
+        user: mockUser,
+      } as unknown as any);
+
+      // Assert
+      expect(mockOrderDto.userId).toEqual(mockUser.id);
+      expect(executeSpy).toHaveBeenCalledWith(mockOrderDto);
+      expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe('updateOrderStatus', () => {
+    it('should call updateOrderStatusUseCase with correct parameters', async () => {
+      // Mock data
+      const orderId = 1;
+      const updateDto = createMockUpdateOrderStatusDto();
+      const mockUser = createMockBusinessUser();
+      const mockResponse = createMockOrderResponse({
+        status: OrderStatus.IN_PROCESS,
+      });
+
+      // Setup mocks
+      const executeSpy = jest
+        .spyOn(updateOrderStatusUseCase, 'execute')
+        .mockResolvedValue(mockResponse);
+
+      // Execute
+      const result = await controller.updateOrderStatus(orderId, updateDto, {
+        user: mockUser,
+      } as unknown as any);
+
+      // Assert
+      expect(executeSpy).toHaveBeenCalledWith(
+        orderId,
+        updateDto,
+        mockUser.id,
+        mockUser.role,
+      );
+      expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe('getUserOrders', () => {
+    it('should call getUserOrdersUseCase with user ID and query parameters', async () => {
+      // Mock data
+      const mockUser = createMockUser();
+      const query = createMockOrdersQueryDto();
+      const mockResponse = createMockPaginatedOrdersResponse();
+
+      // Setup mocks
+      const executeSpy = jest
+        .spyOn(getUserOrdersUseCase, 'execute')
+        .mockResolvedValue(mockResponse);
+
+      // Execute
+      const result = await controller.getUserOrders(
+        { user: mockUser } as unknown as any,
+        query,
       );
 
       // Assert
-      expect(dtoToUse.userId).toEqual(mockedUser.id); // userId should be overridden
-      expect(mockCreateOrderUseCase.execute).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: mockedUser.id,
-          productId: dtoToUse.productId,
-          businessId: dtoToUse.businessId,
-          quantity: dtoToUse.quantity,
-        }),
-      );
-      expect(result).toEqual(mockOrderResponse);
+      expect(executeSpy).toHaveBeenCalledWith(mockUser.id, query);
+      expect(result).toEqual(mockResponse);
     });
+  });
 
-    it('should handle errors from the use case', async () => {
-      // Arrange
-      const error = new Error('Something went wrong');
-      mockCreateOrderUseCase.execute.mockRejectedValue(error);
-      const dtoToUse = { ...orderDto };
+  describe('getBusinessOrders', () => {
+    it('should call getBusinessOrdersUseCase with business ID and query parameters', async () => {
+      // Mock data
+      const mockUser = createMockBusinessUser();
+      const query = createMockOrdersQueryDto();
+      const mockResponse = createMockPaginatedOrdersResponse();
 
-      // Act & Assert
-      await expect(
-        simulateCreateOrder(mockCreateOrderUseCase, dtoToUse, mockedUser.id),
-      ).rejects.toThrow(error);
-      expect(mockCreateOrderUseCase.execute).toHaveBeenCalled();
+      // Setup mocks
+      const executeSpy = jest
+        .spyOn(getBusinessOrdersUseCase, 'execute')
+        .mockResolvedValue(mockResponse);
+
+      // Execute
+      const result = await controller.getBusinessOrders(
+        { user: mockUser } as unknown as any,
+        query,
+      );
+
+      // Assert
+      expect(executeSpy).toHaveBeenCalledWith(mockUser.id, query);
+      expect(result).toEqual(mockResponse);
     });
   });
 });

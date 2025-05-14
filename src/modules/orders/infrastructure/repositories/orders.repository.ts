@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Order } from '../../domain/entities/order.entity';
 import { IOrdersRepository } from '../../domain/repositories/orders.repository.interface';
-import { Prisma } from '@prisma/client';
+import { Prisma, OrderStatus } from '@prisma/client';
 
 @Injectable()
 export class OrdersRepository implements IOrdersRepository {
@@ -72,5 +72,87 @@ export class OrdersRepository implements IOrdersRepository {
     await this.prisma.order.delete({
       where: { id },
     });
+  }
+
+  async updateStatus(id: number, status: OrderStatus): Promise<Order> {
+    return await this.prisma.order.update({
+      where: { id },
+      data: { status },
+      include: {
+        product: true,
+        user: true,
+        business: true,
+      },
+    });
+  }
+
+  async findPaginatedByUser(
+    userId: number,
+    page: number,
+    pageSize: number,
+    status?: OrderStatus,
+  ): Promise<{ orders: Order[]; total: number }> {
+    const where: Prisma.OrderWhereInput = { userId };
+
+    if (status) {
+      where.status = status;
+    }
+
+    // Ensure page and pageSize are numbers
+    const pageNum = Number(page) || 1;
+    const pageSizeNum = Number(pageSize) || 10;
+
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        skip: (pageNum - 1) * pageSizeNum,
+        take: pageSizeNum,
+        include: {
+          product: true,
+          business: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    return { orders, total };
+  }
+
+  async findPaginatedByBusiness(
+    businessId: number,
+    page: number,
+    pageSize: number,
+    status?: OrderStatus,
+  ): Promise<{ orders: Order[]; total: number }> {
+    const where: Prisma.OrderWhereInput = { businessId };
+
+    if (status) {
+      where.status = status;
+    }
+
+    // Ensure page and pageSize are numbers
+    const pageNum = Number(page) || 1;
+    const pageSizeNum = Number(pageSize) || 10;
+
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        skip: (pageNum - 1) * pageSizeNum,
+        take: pageSizeNum,
+        include: {
+          product: true,
+          user: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    return { orders, total };
   }
 }
