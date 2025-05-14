@@ -54,13 +54,13 @@ describe('DiscoverController', () => {
         sections: [mockProductSectionContent, mockBusinessSectionContent],
       };
 
-      jest
+      const executeMethod = jest
         .spyOn(getDiscoverContentUseCase, 'execute')
         .mockImplementation(() => Promise.resolve(mockResponse));
 
       const result = await controller.getDiscoverContent();
 
-      expect(getDiscoverContentUseCase.execute).toHaveBeenCalled();
+      expect(executeMethod).toHaveBeenCalled();
       expect(result).toEqual(mockResponse);
       expect(result.sections.length).toBe(2);
     });
@@ -70,13 +70,13 @@ describe('DiscoverController', () => {
         sections: [],
       };
 
-      jest
+      const executeMethod = jest
         .spyOn(getDiscoverContentUseCase, 'execute')
         .mockImplementation(() => Promise.resolve(mockResponse));
 
       const result = await controller.getDiscoverContent();
 
-      expect(getDiscoverContentUseCase.execute).toHaveBeenCalled();
+      expect(executeMethod).toHaveBeenCalled();
       expect(result.sections).toEqual([]);
     });
   });
@@ -100,13 +100,13 @@ describe('DiscoverController', () => {
         ],
       };
 
-      jest
+      const executeMethod = jest
         .spyOn(getActiveSectionsMetadataUseCase, 'execute')
         .mockImplementation(() => Promise.resolve(mockResponse));
 
       const result = await controller.getActiveSections();
 
-      expect(getActiveSectionsMetadataUseCase.execute).toHaveBeenCalled();
+      expect(executeMethod).toHaveBeenCalled();
       expect(result).toEqual(mockResponse);
       expect(result.sections.length).toBe(2);
     });
@@ -116,13 +116,13 @@ describe('DiscoverController', () => {
         sections: [],
       };
 
-      jest
+      const executeMethod = jest
         .spyOn(getActiveSectionsMetadataUseCase, 'execute')
         .mockImplementation(() => Promise.resolve(mockResponse));
 
       const result = await controller.getActiveSections();
 
-      expect(getActiveSectionsMetadataUseCase.execute).toHaveBeenCalled();
+      expect(executeMethod).toHaveBeenCalled();
       expect(result.sections).toEqual([]);
     });
   });
