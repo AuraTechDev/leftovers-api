@@ -31,6 +31,7 @@ import { GetBusinessUseCase } from '../../application/use-cases/get-business.use
 import { UpdateBusinessUseCase } from '../../application/use-cases/update-business.use-case';
 import { DeleteBusinessUseCase } from '../../application/use-cases/delete-business.use-case';
 import { UploadBusinessLogoUseCase } from '../../application/use-cases/upload-business-logo.use-case';
+import { UploadBusinessBannerUseCase } from '../../application/use-cases/upload-business-banner.use-case';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BusinessResponseDto } from '../../application/dtos/business-response.dto';
 import { imageUploadOptions } from '../config/file-upload.config';
@@ -45,8 +46,11 @@ interface UploadedFileType {
   originalname: string;
   encoding: string;
   mimetype: string;
-  buffer: Buffer;
   size: number;
+  buffer: Buffer;
+  destination?: string;
+  filename?: string;
+  path?: string;
 }
 
 @Controller('business')
@@ -58,6 +62,7 @@ export class BusinessController {
     private readonly updateBusinessUseCase: UpdateBusinessUseCase,
     private readonly deleteBusinessUseCase: DeleteBusinessUseCase,
     private readonly uploadBusinessLogoUseCase: UploadBusinessLogoUseCase,
+    private readonly uploadBusinessBannerUseCase: UploadBusinessBannerUseCase,
     private readonly usersRepository: UsersRepository,
   ) {}
 
@@ -154,6 +159,42 @@ export class BusinessController {
     }
 
     return this.uploadBusinessLogoUseCase.execute(id, file.buffer);
+  }
+
+  @Post(':id/banner')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
+  @UseInterceptors(FileInterceptor('file', imageUploadOptions))
+  async uploadBanner(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: UploadedFileType,
+    @Request() req: RequestWithUser,
+  ): Promise<BusinessResponseDto> {
+    // Check if user is trying to update their own business banner (if BUSINESS role)
+    if (req.user.role === Role.BUSINESS) {
+      const userWithRelations = await this.usersRepository.findById(
+        req.user.id,
+      );
+
+      if (!userWithRelations) {
+        throw new NotFoundException('User not found');
+      }
+
+      // If the user does not have an associated business or is trying to edit another business
+      const userBusinessId = userWithRelations.businessId || 0;
+
+      if (!userBusinessId || userBusinessId !== id) {
+        throw new ForbiddenException(
+          'You can only update the banner of your own business',
+        );
+      }
+    }
+
+    if (!file) {
+      throw new NotFoundException('No file uploaded');
+    }
+
+    return this.uploadBusinessBannerUseCase.execute(id, file.buffer);
   }
 
   @Delete(':id')

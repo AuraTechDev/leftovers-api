@@ -10,6 +10,7 @@ export class BusinessResponseDto {
   contactEmail: string;
   phone?: string | null;
   logoUrl?: string | null;
+  bannerUrl?: string | null;
   openingHours?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -25,6 +26,7 @@ export class BusinessResponseDto {
     response.contactEmail = business.contactEmail;
     response.phone = business.phone;
     response.logoUrl = business.logoUrl;
+    response.bannerUrl = business.bannerUrl;
     response.openingHours = business.openingHours;
     response.createdAt = business.createdAt;
     response.updatedAt = business.updatedAt;

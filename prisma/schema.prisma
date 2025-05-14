@@ -51,6 +51,7 @@ model Business {
   contactEmail String
   phone        String?
   logoUrl      String?
+  bannerUrl    String?
   openingHours String?
   products     Product[]
   users        User[]    @relation // Users (with BUSINESS role) assigned to this business
