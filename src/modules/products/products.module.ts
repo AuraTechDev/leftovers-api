@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ProductsController } from './infrastructure/controllers/products.controller';
 import { ProductRatingsController } from './infrastructure/controllers/product-ratings.controller';
 import { ProductsRepository } from './infrastructure/repositories/products.repository';
+import { ProductRatingsRepository } from './infrastructure/repositories/product-ratings.repository';
 import { CreateProductUseCase } from './application/use-cases/create-product.use-case';
 import { UpdateProductUseCase } from './application/use-cases/update-product.use-case';
 import { DeleteProductUseCase } from './application/use-cases/delete-product.use-case';
@@ -12,7 +13,6 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { UsersModule } from '../users/users.module';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { BusinessModule } from '../business/business.module';
-import { RatingsModule } from '../ratings/ratings.module';
 import { FoodTypesRepository } from './infrastructure/repositories/food-types.repository';
 import { GetAllFoodTypesUseCase } from './application/use-cases/get-all-food-types.use-case';
 import { CreateFoodTypeUseCase } from './application/use-cases/create-food-type.use-case';
@@ -23,18 +23,13 @@ import { ToggleProductPropertyUseCase } from './application/use-cases/toggle-pro
 import { ProductInventoryService } from './application/services/product-inventory.service';
 
 @Module({
-  imports: [
-    PrismaModule,
-    UsersModule,
-    CloudinaryModule,
-    BusinessModule,
-    RatingsModule,
-  ],
+  imports: [PrismaModule, UsersModule, CloudinaryModule, BusinessModule],
   controllers: [ProductsController, ProductRatingsController],
   providers: [
     // Product repositories
     ProductsRepository,
     FoodTypesRepository,
+    ProductRatingsRepository,
 
     // Product services
     ProductInventoryService,

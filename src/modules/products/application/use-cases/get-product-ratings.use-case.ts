@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { RatingsRepository } from '../../../ratings/infrastructure/repositories/ratings.repository';
+import { ProductRatingsRepository } from '../../infrastructure/repositories/product-ratings.repository';
 import { ProductsRepository } from '../../infrastructure/repositories/products.repository';
 import {
   ProductRatingItemDto,
@@ -9,7 +9,7 @@ import {
 @Injectable()
 export class GetProductRatingsUseCase {
   constructor(
-    private readonly ratingsRepository: RatingsRepository,
+    private readonly productRatingsRepository: ProductRatingsRepository,
     private readonly productsRepository: ProductsRepository,
   ) {}
 
@@ -21,9 +21,9 @@ export class GetProductRatingsUseCase {
     }
 
     const { average, count } =
-      await this.ratingsRepository.getProductAverageRating(productId);
+      await this.productRatingsRepository.getProductAverageRating(productId);
 
-    const ratingsData = await this.ratingsRepository.findByProduct(
+    const ratingsData = await this.productRatingsRepository.findByProduct(
       productId,
       10,
     );
