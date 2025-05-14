@@ -4,12 +4,16 @@ import { CreateOrderUseCase } from '../../../application/use-cases/create-order.
 import { UpdateOrderStatusUseCase } from '../../../application/use-cases/update-order-status.use-case';
 import { GetUserOrdersUseCase } from '../../../application/use-cases/get-user-orders.use-case';
 import { GetBusinessOrdersUseCase } from '../../../application/use-cases/get-business-orders.use-case';
-import { Role, OrderStatus } from '@prisma/client';
-import { CreateOrderDto } from '../../../application/dtos/create-order.dto';
-import { UpdateOrderStatusDto } from '../../../application/dtos/update-order-status.dto';
-import { OrderResponseDto } from '../../../application/dtos/order-response.dto';
-import { PaginatedOrdersResponseDto } from '../../../application/dtos/paginated-orders-response.dto';
-import { AuthUser } from '../../../../auth/domain/interfaces/user.interface';
+import { OrderStatus } from '@prisma/client';
+import {
+  createMockUser,
+  createMockBusinessUser,
+  createMockOrderDto,
+  createMockUpdateOrderStatusDto,
+  createMockOrdersQueryDto,
+  createMockOrderResponse,
+  createMockPaginatedOrdersResponse,
+} from '../../../__mocks__/order-controllers.mock';
 
 describe('OrdersController', () => {
   let controller: OrdersController;
@@ -68,31 +72,19 @@ describe('OrdersController', () => {
   describe('createOrder', () => {
     it('should set userId from authenticated user and call createOrderUseCase', async () => {
       // Mock data
-      const mockUser: AuthUser = {
-        id: 123,
-        email: 'test@example.com',
-        role: Role.USER,
-        name: 'Test User',
-        provider: 'LOCAL',
-      };
-      const mockOrderDto: Partial<CreateOrderDto> = {
-        productId: 1,
-        businessId: 2,
-        quantity: 3,
-        pickupTime: new Date(),
-      };
-      const mockResponse: Partial<OrderResponseDto> = { id: 1 };
+      const mockUser = createMockUser();
+      const mockOrderDto = createMockOrderDto();
+      const mockResponse = createMockOrderResponse();
 
       // Setup mocks
       const executeSpy = jest
         .spyOn(createOrderUseCase, 'execute')
-        .mockResolvedValue(mockResponse as OrderResponseDto);
+        .mockResolvedValue(mockResponse);
 
       // Execute
-      const result = await controller.createOrder(
-        mockOrderDto as CreateOrderDto,
-        { user: mockUser } as unknown as any,
-      );
+      const result = await controller.createOrder(mockOrderDto, {
+        user: mockUser,
+      } as unknown as any);
 
       // Assert
       expect(mockOrderDto.userId).toEqual(mockUser.id);
@@ -105,25 +97,16 @@ describe('OrdersController', () => {
     it('should call updateOrderStatusUseCase with correct parameters', async () => {
       // Mock data
       const orderId = 1;
-      const updateDto: UpdateOrderStatusDto = {
+      const updateDto = createMockUpdateOrderStatusDto();
+      const mockUser = createMockBusinessUser();
+      const mockResponse = createMockOrderResponse({
         status: OrderStatus.IN_PROCESS,
-      };
-      const mockUser: AuthUser = {
-        id: 2,
-        email: 'business@example.com',
-        role: Role.BUSINESS,
-        name: 'Business User',
-        provider: 'LOCAL',
-      };
-      const mockResponse: Partial<OrderResponseDto> = {
-        id: 1,
-        status: OrderStatus.IN_PROCESS,
-      };
+      });
 
       // Setup mocks
       const executeSpy = jest
         .spyOn(updateOrderStatusUseCase, 'execute')
-        .mockResolvedValue(mockResponse as OrderResponseDto);
+        .mockResolvedValue(mockResponse);
 
       // Execute
       const result = await controller.updateOrderStatus(orderId, updateDto, {
@@ -144,33 +127,23 @@ describe('OrdersController', () => {
   describe('getUserOrders', () => {
     it('should call getUserOrdersUseCase with user ID and query parameters', async () => {
       // Mock data
-      const userId = 123;
-      const query = { page: 1, pageSize: 10 };
-      const mockUser: AuthUser = {
-        id: userId,
-        email: 'user@example.com',
-        role: Role.USER,
-        name: 'Regular User',
-        provider: 'LOCAL',
-      };
-      const mockResponse: Partial<PaginatedOrdersResponseDto> = {
-        data: [{ id: 1 } as OrderResponseDto, { id: 2 } as OrderResponseDto],
-        meta: { page: 1, pageSize: 10, totalItems: 2, totalPages: 1 },
-      };
+      const mockUser = createMockUser();
+      const query = createMockOrdersQueryDto();
+      const mockResponse = createMockPaginatedOrdersResponse();
 
       // Setup mocks
       const executeSpy = jest
         .spyOn(getUserOrdersUseCase, 'execute')
-        .mockResolvedValue(mockResponse as PaginatedOrdersResponseDto);
+        .mockResolvedValue(mockResponse);
 
       // Execute
       const result = await controller.getUserOrders(
         { user: mockUser } as unknown as any,
-        query as any,
+        query,
       );
 
       // Assert
-      expect(executeSpy).toHaveBeenCalledWith(userId, query);
+      expect(executeSpy).toHaveBeenCalledWith(mockUser.id, query);
       expect(result).toEqual(mockResponse);
     });
   });
@@ -178,33 +151,23 @@ describe('OrdersController', () => {
   describe('getBusinessOrders', () => {
     it('should call getBusinessOrdersUseCase with business ID and query parameters', async () => {
       // Mock data
-      const businessId = 2;
-      const query = { page: 1, pageSize: 10 };
-      const mockUser: AuthUser = {
-        id: businessId,
-        email: 'business@example.com',
-        role: Role.BUSINESS,
-        name: 'Business Owner',
-        provider: 'LOCAL',
-      };
-      const mockResponse: Partial<PaginatedOrdersResponseDto> = {
-        data: [{ id: 1 } as OrderResponseDto, { id: 2 } as OrderResponseDto],
-        meta: { page: 1, pageSize: 10, totalItems: 2, totalPages: 1 },
-      };
+      const mockUser = createMockBusinessUser();
+      const query = createMockOrdersQueryDto();
+      const mockResponse = createMockPaginatedOrdersResponse();
 
       // Setup mocks
       const executeSpy = jest
         .spyOn(getBusinessOrdersUseCase, 'execute')
-        .mockResolvedValue(mockResponse as PaginatedOrdersResponseDto);
+        .mockResolvedValue(mockResponse);
 
       // Execute
       const result = await controller.getBusinessOrders(
         { user: mockUser } as unknown as any,
-        query as any,
+        query,
       );
 
       // Assert
-      expect(executeSpy).toHaveBeenCalledWith(businessId, query);
+      expect(executeSpy).toHaveBeenCalledWith(mockUser.id, query);
       expect(result).toEqual(mockResponse);
     });
   });

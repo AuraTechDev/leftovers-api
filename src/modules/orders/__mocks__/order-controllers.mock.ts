@@ -3,6 +3,8 @@ import { AuthUser } from '../../auth/domain/interfaces/user.interface';
 import { CreateOrderDto } from '../application/dtos/create-order.dto';
 import { UpdateOrderStatusDto } from '../application/dtos/update-order-status.dto';
 import { GetOrdersQueryDto } from '../application/dtos/get-orders-query.dto';
+import { OrderResponseDto } from '../application/dtos/order-response.dto';
+import { PaginatedOrdersResponseDto } from '../application/dtos/paginated-orders-response.dto';
 
 // Mock the use cases
 export const createMockCreateOrderUseCase = () => ({
@@ -19,6 +21,36 @@ export const createMockGetUserOrdersUseCase = () => ({
 
 export const createMockGetBusinessOrdersUseCase = () => ({
   execute: jest.fn(),
+});
+
+// Create mock order response
+export const createMockOrderResponse = (
+  override: Partial<OrderResponseDto> = {},
+): OrderResponseDto => ({
+  id: 1,
+  userId: 123,
+  productId: 1,
+  businessId: 2,
+  quantity: 3,
+  status: OrderStatus.PENDING,
+  pickupTime: new Date(),
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  ...override,
+});
+
+// Create mock paginated orders response
+export const createMockPaginatedOrdersResponse = (
+  override: Partial<PaginatedOrdersResponseDto> = {},
+): PaginatedOrdersResponseDto => ({
+  data: [createMockOrderResponse(), createMockOrderResponse({ id: 2 })],
+  meta: {
+    page: 1,
+    pageSize: 10,
+    totalItems: 2,
+    totalPages: 1,
+  },
+  ...override,
 });
 
 // Type for mock order response
@@ -97,38 +129,6 @@ export const createMockOrdersQueryDto = (
   ...override,
 });
 
-// Create a mock order response
-export const createMockOrderResponse = (
-  override: Partial<MockOrderResponse> = {},
-): MockOrderResponse => ({
-  id: 1,
-  userId: 123,
-  productId: 1,
-  businessId: 2,
-  quantity: 3,
-  status: OrderStatus.PENDING,
-  pickupTime: new Date(),
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  ...override,
-});
-
-// Create a mock paginated orders response
-export const createMockPaginatedOrdersResponse = (
-  orders: MockOrderResponse[] = [createMockOrderResponse()],
-  page = 1,
-  pageSize = 10,
-  totalItems = 1,
-): MockPaginatedOrdersResponse => ({
-  data: orders,
-  meta: {
-    page,
-    pageSize,
-    totalItems,
-    totalPages: Math.ceil(totalItems / pageSize),
-  },
-});
-
 // Simple helper function that directly simulates controller behavior
 export const simulateCreateOrder = (
   useCase: { execute: (dto: CreateOrderDto) => Promise<MockOrderResponse> },
@@ -185,3 +185,23 @@ export const simulateGetBusinessOrders = (
 ): Promise<MockPaginatedOrdersResponse> => {
   return useCase.execute(businessId, query);
 };
+
+// Create provider configurations for test module
+export const createOrdersTestProviders = () => [
+  {
+    provide: 'CreateOrderUseCase',
+    useValue: createMockCreateOrderUseCase(),
+  },
+  {
+    provide: 'UpdateOrderStatusUseCase',
+    useValue: createMockUpdateOrderStatusUseCase(),
+  },
+  {
+    provide: 'GetUserOrdersUseCase',
+    useValue: createMockGetUserOrdersUseCase(),
+  },
+  {
+    provide: 'GetBusinessOrdersUseCase',
+    useValue: createMockGetBusinessOrdersUseCase(),
+  },
+];
