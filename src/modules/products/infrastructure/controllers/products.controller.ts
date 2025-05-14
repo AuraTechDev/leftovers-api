@@ -136,9 +136,10 @@ export class ProductsController {
   @Get('products')
   @UseGuards(JwtAuthGuard)
   async getAllProducts(
-    @Query('businessId', ParseIntPipe) businessId?: number,
+    @Query('businessId') businessId?: string,
   ): Promise<ProductResponseDto[]> {
-    return this.getAllProductsUseCase.execute(businessId);
+    const parsedBusinessId = businessId ? parseInt(businessId, 10) : undefined;
+    return this.getAllProductsUseCase.execute(parsedBusinessId);
   }
 
   @Get('products/:id')
