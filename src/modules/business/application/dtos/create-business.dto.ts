@@ -45,5 +45,9 @@ export class CreateBusinessDto {
 
   @IsOptional()
   @IsString()
+  bannerUrl?: string | null;
+
+  @IsOptional()
+  @IsString()
   openingHours?: string | null;
 }

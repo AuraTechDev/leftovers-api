@@ -18,6 +18,7 @@ export const mockBusiness: Business = {
   contactEmail: 'business@example.com',
   phone: '555-1234',
   logoUrl: 'https://example.com/logo.png',
+  bannerUrl: 'https://example.com/banner.jpg',
   openingHours: '9:00-17:00',
   createdAt: new Date(),
   updatedAt: new Date(),

@@ -10,6 +10,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { UsersModule } from '../users/users.module';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { UploadBusinessLogoUseCase } from './application/use-cases/upload-business-logo.use-case';
+import { UploadBusinessBannerUseCase } from './application/use-cases/upload-business-banner.use-case';
 
 @Module({
   imports: [PrismaModule, UsersModule, CloudinaryModule],
@@ -22,6 +23,7 @@ import { UploadBusinessLogoUseCase } from './application/use-cases/upload-busine
     GetBusinessUseCase,
     GetAllBusinessesUseCase,
     UploadBusinessLogoUseCase,
+    UploadBusinessBannerUseCase,
   ],
   exports: [BusinessRepository],
 })

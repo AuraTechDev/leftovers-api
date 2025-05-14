@@ -44,5 +44,9 @@ export class UpdateBusinessDto {
 
   @IsOptional()
   @IsString()
+  bannerUrl?: string | null;
+
+  @IsOptional()
+  @IsString()
   openingHours?: string | null;
 }

@@ -4,3 +4,4 @@ export * from './get-business.use-case';
 export * from './update-business.use-case';
 export * from './delete-business.use-case';
 export * from './upload-business-logo.use-case';
+export * from './upload-business-banner.use-case';

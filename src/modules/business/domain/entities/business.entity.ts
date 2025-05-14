@@ -8,6 +8,7 @@ export class Business {
   contactEmail: string;
   phone?: string | null;
   logoUrl?: string | null;
+  bannerUrl?: string | null;
   openingHours?: string | null;
   createdAt: Date;
   updatedAt: Date;

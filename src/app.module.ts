@@ -7,6 +7,7 @@ import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { RatingsModule } from './modules/ratings/ratings.module';
+import { DiscoverModule } from './modules/discover/discover.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { RatingsModule } from './modules/ratings/ratings.module';
     ProductsModule,
     OrdersModule,
     RatingsModule,
+    DiscoverModule,
   ],
   controllers: [],
   providers: [],
