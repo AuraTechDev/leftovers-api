@@ -27,6 +27,7 @@ model User {
   refreshTokens RefreshToken[]
   Business      Business?      @relation(fields: [businessId], references: [id])
   businessId    Int?
+  Order         Order[]
 }
 
 model RefreshToken {
@@ -49,24 +50,53 @@ model Business {
   contactEmail String
   phone        String?
   logoUrl      String?
-  openingHours String? // Business opening hours
+  openingHours String?
   products     Product[]
   users        User[]    @relation // Users (with BUSINESS role) assigned to this business
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  Order        Order[]
 }
 
 model Product {
-  id          String   @id @default(uuid())
+  id          Int       @id @default(autoincrement())
   name        String
   description String?
   price       Float
   quantity    Int
   imageUrl    String?
+  isFeatured  Boolean   @default(false)
+  isDisabled  Boolean   @default(false)
+  foodTypeId  Int?
+  foodType    FoodType? @relation(fields: [foodTypeId], references: [id])
   businessId  Int
-  business    Business @relation(fields: [businessId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  business    Business  @relation(fields: [businessId], references: [id])
+  orders      Order[]   @relation("ProductOrders")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model FoodType {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  user       User        @relation(fields: [userId], references: [id])
+  productId  Int
+  product    Product     @relation("ProductOrders", fields: [productId], references: [id])
+  businessId Int
+  business   Business    @relation(fields: [businessId], references: [id])
+  quantity   Int
+  status     OrderStatus @default(PENDING)
+  pickupTime DateTime
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 }
 
 enum Role {
@@ -79,4 +109,11 @@ enum Provider {
   LOCAL
   GOOGLE
   APPLE
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROCESS
+  COMPLETED
+  CANCELLED
 }
