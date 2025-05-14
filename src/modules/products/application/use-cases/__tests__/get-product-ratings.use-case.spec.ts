@@ -8,7 +8,7 @@ import {
 } from '../../../__mocks__/ratings-repository.mock';
 import { createMockProduct } from '../../../__mocks__/products-repository.mock';
 import { ProductsRepository } from '../../../infrastructure/repositories/products.repository';
-import { RatingsRepository } from '../../../../ratings/infrastructure/repositories/ratings.repository';
+import { ProductRatingsRepository } from '../../../infrastructure/repositories/product-ratings.repository';
 
 describe('GetProductRatingsUseCase', () => {
   let useCase: GetProductRatingsUseCase;
@@ -32,7 +32,7 @@ describe('GetProductRatingsUseCase', () => {
           useValue: mockProductsRepository,
         },
         {
-          provide: RatingsRepository,
+          provide: ProductRatingsRepository,
           useValue: mockRatingsRepository,
         },
       ],
