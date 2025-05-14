@@ -11,7 +11,6 @@ import {
   NotFoundException,
   UseGuards,
   ForbiddenException,
-  Request,
   ParseIntPipe,
   UseInterceptors,
   UploadedFile,
@@ -35,23 +34,8 @@ import { UploadBusinessBannerUseCase } from '../../application/use-cases/upload-
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BusinessResponseDto } from '../../application/dtos/business-response.dto';
 import { imageUploadOptions } from '../config/file-upload.config';
-
-interface RequestWithUser extends Request {
-  user: AuthUser;
-}
-
-// Define file upload interface
-interface UploadedFileType {
-  fieldname: string;
-  originalname: string;
-  encoding: string;
-  mimetype: string;
-  size: number;
-  buffer: Buffer;
-  destination?: string;
-  filename?: string;
-  path?: string;
-}
+import { GetUser } from '../../../auth/infrastructure/decorators/get-user.decorator';
+import { UploadedFileType } from '../../../cloudinary/interfaces/file-upload.interface';
 
 @Controller('business')
 export class BusinessController {
@@ -89,9 +73,11 @@ export class BusinessController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<Business> {
     const business = await this.getBusinessUseCase.execute(id);
+
     if (!business) {
       throw new NotFoundException(`Business with ID ${id} not found`);
     }
+
     return business;
   }
 
@@ -101,13 +87,13 @@ export class BusinessController {
   async updateBusiness(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateBusinessDto: UpdateBusinessDto,
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ): Promise<Business> {
     // If the user has the BUSINESS role, we verify that they are trying to update their own business
-    if (req.user.role === Role.BUSINESS) {
+    if (currentUser.role === Role.BUSINESS) {
       // Retrieve the complete user with their relations from the database
       const userWithRelations = await this.usersRepository.findById(
-        req.user.id,
+        currentUser.id,
       );
 
       if (!userWithRelations) {
@@ -132,12 +118,12 @@ export class BusinessController {
   async uploadLogo(
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile() file: UploadedFileType,
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ): Promise<BusinessResponseDto> {
     // Check if user is trying to update their own business logo (if BUSINESS role)
-    if (req.user.role === Role.BUSINESS) {
+    if (currentUser.role === Role.BUSINESS) {
       const userWithRelations = await this.usersRepository.findById(
-        req.user.id,
+        currentUser.id,
       );
 
       if (!userWithRelations) {
@@ -168,12 +154,12 @@ export class BusinessController {
   async uploadBanner(
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile() file: UploadedFileType,
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ): Promise<BusinessResponseDto> {
     // Check if user is trying to update their own business banner (if BUSINESS role)
-    if (req.user.role === Role.BUSINESS) {
+    if (currentUser.role === Role.BUSINESS) {
       const userWithRelations = await this.usersRepository.findById(
-        req.user.id,
+        currentUser.id,
       );
 
       if (!userWithRelations) {

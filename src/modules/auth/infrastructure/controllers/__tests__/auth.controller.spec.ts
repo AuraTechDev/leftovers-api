@@ -166,7 +166,7 @@ describe('AuthController', () => {
 
       loginUseCase.execute.mockResolvedValue(mockLoginResponse);
 
-      const result = await controller.login(req);
+      const result = await controller.login(req.user);
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(loginUseCase.execute).toHaveBeenCalledWith(mockUser);
@@ -214,7 +214,7 @@ describe('AuthController', () => {
     it('should return the user profile', () => {
       const req = { user: mockUser } as RequestWithUser;
 
-      const result = controller.getProfile(req);
+      const result = controller.getProfile(req.user);
 
       expect(result).toEqual(mockUser);
     });
@@ -246,7 +246,7 @@ describe('AuthController', () => {
 
       oauthLoginUseCase.execute.mockResolvedValue(mockLoginResponse);
 
-      const result = await controller.googleAuthCallback(req);
+      const result = await controller.googleAuthCallback(req.user);
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(oauthLoginUseCase.execute).toHaveBeenCalledWith(mockUser);
@@ -258,7 +258,7 @@ describe('AuthController', () => {
 
       oauthLoginUseCase.execute.mockResolvedValue(mockLoginResponse);
 
-      const result = await controller.appleAuthCallback(req);
+      const result = await controller.appleAuthCallback(req.user);
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(oauthLoginUseCase.execute).toHaveBeenCalledWith(mockUser);
@@ -288,7 +288,7 @@ describe('AuthController', () => {
 
       updateProfileUseCase.execute.mockResolvedValue(updatedUser);
 
-      const result = await controller.updateProfile(req, updateProfileDto);
+      const result = await controller.updateProfile(req.user, updateProfileDto);
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(updateProfileUseCase.execute).toHaveBeenCalledWith(
@@ -309,7 +309,10 @@ describe('AuthController', () => {
 
       changePasswordUseCase.execute.mockResolvedValue(undefined);
 
-      const result = await controller.changePassword(req, changePasswordDto);
+      const result = await controller.changePassword(
+        req.user,
+        changePasswordDto,
+      );
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(changePasswordUseCase.execute).toHaveBeenCalledWith(

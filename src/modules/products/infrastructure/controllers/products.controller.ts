@@ -11,7 +11,6 @@ import {
   NotFoundException,
   UseGuards,
   ForbiddenException,
-  Request,
   ParseIntPipe,
   UseInterceptors,
   UploadedFile,
@@ -27,6 +26,8 @@ import { UsersRepository } from '../../../users/infrastructure/repositories/user
 import { BusinessRepository } from '../../../business/infrastructure/repositories/business.repository';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { imageUploadOptions } from '../config/file-upload.config';
+import { UploadedFileType } from '../../../cloudinary/interfaces/file-upload.interface';
+import { GetUser } from '../../../auth/infrastructure/decorators/get-user.decorator';
 
 // Products Use Cases
 import { CreateProductUseCase } from '../../application/use-cases/create-product.use-case';
@@ -49,20 +50,6 @@ import { UpdateProductDto } from '../../application/dtos/update-product.dto';
 import { ProductResponseDto } from '../../application/dtos/product-response.dto';
 import { CreateFoodTypeDto } from '../../application/dtos/create-food-type.dto';
 import { UpdateFoodTypeDto } from '../../application/dtos/update-food-type.dto';
-
-interface RequestWithUser extends Request {
-  user: AuthUser;
-}
-
-// Define file upload interface
-interface UploadedFileType {
-  fieldname: string;
-  originalname: string;
-  encoding: string;
-  mimetype: string;
-  buffer: Buffer;
-  size: number;
-}
 
 @Controller()
 export class ProductsController {
@@ -119,12 +106,12 @@ export class ProductsController {
   @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
   async createProduct(
     @Body() createProductDto: CreateProductDto,
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ): Promise<ProductResponseDto> {
     // If user is a BUSINESS role, ensure they're creating a product for their own business
-    if (req.user.role === Role.BUSINESS) {
+    if (currentUser.role === Role.BUSINESS) {
       await this.validateBusinessOwnership(
-        req.user.id,
+        currentUser.id,
         createProductDto.businessId,
         'create',
       );
@@ -156,15 +143,15 @@ export class ProductsController {
   async updateProduct(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProductDto: UpdateProductDto,
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ): Promise<ProductResponseDto> {
     // First get the product to check authorization
     const product = await this.getProductUseCase.execute(id);
 
     // If user has BUSINESS role, ensure they're updating a product from their own business
-    if (req.user.role === Role.BUSINESS) {
+    if (currentUser.role === Role.BUSINESS) {
       await this.validateBusinessOwnership(
-        req.user.id,
+        currentUser.id,
         product.businessId,
         'update',
       );
@@ -179,15 +166,15 @@ export class ProductsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteProduct(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ): Promise<void> {
     // First get the product to check authorization
     const product = await this.getProductUseCase.execute(id);
 
     // If user has BUSINESS role, ensure they're deleting a product from their own business
-    if (req.user.role === Role.BUSINESS) {
+    if (currentUser.role === Role.BUSINESS) {
       await this.validateBusinessOwnership(
-        req.user.id,
+        currentUser.id,
         product.businessId,
         'delete',
       );
@@ -203,15 +190,15 @@ export class ProductsController {
   async uploadProductImage(
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile() file: UploadedFileType,
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ): Promise<ProductResponseDto> {
     // First get the product to check authorization
     const product = await this.getProductUseCase.execute(id);
 
     // If user has BUSINESS role, ensure they're uploading an image for a product from their own business
-    if (req.user.role === Role.BUSINESS) {
+    if (currentUser.role === Role.BUSINESS) {
       await this.validateBusinessOwnership(
-        req.user.id,
+        currentUser.id,
         product.businessId,
         'upload images for',
       );
@@ -229,15 +216,15 @@ export class ProductsController {
   @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
   async toggleProductFeature(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ): Promise<ProductResponseDto> {
     // First get the product to check authorization
     const product = await this.getProductUseCase.execute(id);
 
     // If user has BUSINESS role, ensure they're toggling a product from their own business
-    if (req.user.role === Role.BUSINESS) {
+    if (currentUser.role === Role.BUSINESS) {
       await this.validateBusinessOwnership(
-        req.user.id,
+        currentUser.id,
         product.businessId,
         'update',
       );
@@ -251,15 +238,15 @@ export class ProductsController {
   @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
   async toggleProductDisable(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ): Promise<ProductResponseDto> {
     // First get the product to check authorization
     const product = await this.getProductUseCase.execute(id);
 
     // If user has BUSINESS role, ensure they're toggling a product from their own business
-    if (req.user.role === Role.BUSINESS) {
+    if (currentUser.role === Role.BUSINESS) {
       await this.validateBusinessOwnership(
-        req.user.id,
+        currentUser.id,
         product.businessId,
         'update',
       );

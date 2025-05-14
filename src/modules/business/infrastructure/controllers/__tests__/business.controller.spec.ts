@@ -189,7 +189,11 @@ describe('BusinessController', () => {
         description: updateBusinessDto.description!,
       });
 
-      const result = await controller.updateBusiness(1, updateBusinessDto, req);
+      const result = await controller.updateBusiness(
+        1,
+        updateBusinessDto,
+        req.user,
+      );
 
       expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto);
       expect(result.name).toEqual(updateBusinessDto.name);
@@ -209,7 +213,11 @@ describe('BusinessController', () => {
         description: updateBusinessDto.description!,
       });
 
-      const result = await controller.updateBusiness(1, updateBusinessDto, req);
+      const result = await controller.updateBusiness(
+        1,
+        updateBusinessDto,
+        req.user,
+      );
 
       expect(findByIdSpy).toHaveBeenCalledWith(2);
       expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto);
@@ -226,7 +234,7 @@ describe('BusinessController', () => {
       const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
 
       await expect(
-        controller.updateBusiness(999, updateBusinessDto, req),
+        controller.updateBusiness(999, updateBusinessDto, req.user),
       ).rejects.toThrow(ForbiddenException);
 
       expect(findByIdSpy).toHaveBeenCalledWith(2);
@@ -244,7 +252,7 @@ describe('BusinessController', () => {
       const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
 
       await expect(
-        controller.updateBusiness(1, updateBusinessDto, req),
+        controller.updateBusiness(1, updateBusinessDto, req.user),
       ).rejects.toThrow(ForbiddenException);
 
       expect(findByIdSpy).toHaveBeenCalledWith(2);
@@ -260,7 +268,7 @@ describe('BusinessController', () => {
       const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
 
       await expect(
-        controller.updateBusiness(1, updateBusinessDto, req),
+        controller.updateBusiness(1, updateBusinessDto, req.user),
       ).rejects.toThrow(NotFoundException);
 
       expect(findByIdSpy).toHaveBeenCalledWith(2);
@@ -290,7 +298,7 @@ describe('BusinessController', () => {
       const result = await controller.uploadLogo(
         1,
         mockFile as UploadedFileType,
-        req,
+        req.user,
       );
 
       // Assert
@@ -311,7 +319,7 @@ describe('BusinessController', () => {
       const result = await controller.uploadLogo(
         1,
         mockFile as UploadedFileType,
-        req,
+        req.user,
       );
 
       // Assert
@@ -330,7 +338,7 @@ describe('BusinessController', () => {
 
       // Act & Assert
       await expect(
-        controller.uploadLogo(2, mockFile as UploadedFileType, req),
+        controller.uploadLogo(2, mockFile as UploadedFileType, req.user),
       ).rejects.toThrow(ForbiddenException);
       expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
       expect(executeSpy).not.toHaveBeenCalled();
@@ -346,7 +354,7 @@ describe('BusinessController', () => {
 
       // Act & Assert
       await expect(
-        controller.uploadLogo(1, mockFile as UploadedFileType, req),
+        controller.uploadLogo(1, mockFile as UploadedFileType, req.user),
       ).rejects.toThrow(NotFoundException);
       expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
       expect(executeSpy).not.toHaveBeenCalled();
@@ -359,7 +367,7 @@ describe('BusinessController', () => {
 
       // Act & Assert
       await expect(
-        controller.uploadLogo(1, null as unknown as UploadedFileType, req),
+        controller.uploadLogo(1, null as unknown as UploadedFileType, req.user),
       ).rejects.toThrow(NotFoundException);
       expect(executeSpy).not.toHaveBeenCalled();
     });
@@ -376,7 +384,7 @@ describe('BusinessController', () => {
       const result = await controller.uploadBanner(
         1,
         mockFile as UploadedFileType,
-        req,
+        req.user,
       );
 
       // Assert
@@ -397,7 +405,7 @@ describe('BusinessController', () => {
       const result = await controller.uploadBanner(
         1,
         mockFile as UploadedFileType,
-        req,
+        req.user,
       );
 
       // Assert
@@ -416,7 +424,7 @@ describe('BusinessController', () => {
 
       // Act & Assert
       await expect(
-        controller.uploadBanner(2, mockFile as UploadedFileType, req),
+        controller.uploadBanner(2, mockFile as UploadedFileType, req.user),
       ).rejects.toThrow(ForbiddenException);
       expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
       expect(executeSpy).not.toHaveBeenCalled();
@@ -432,7 +440,7 @@ describe('BusinessController', () => {
 
       // Act & Assert
       await expect(
-        controller.uploadBanner(1, mockFile as UploadedFileType, req),
+        controller.uploadBanner(1, mockFile as UploadedFileType, req.user),
       ).rejects.toThrow(NotFoundException);
       expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
       expect(executeSpy).not.toHaveBeenCalled();
@@ -445,7 +453,11 @@ describe('BusinessController', () => {
 
       // Act & Assert
       await expect(
-        controller.uploadBanner(1, null as unknown as UploadedFileType, req),
+        controller.uploadBanner(
+          1,
+          null as unknown as UploadedFileType,
+          req.user,
+        ),
       ).rejects.toThrow(NotFoundException);
       expect(executeSpy).not.toHaveBeenCalled();
     });

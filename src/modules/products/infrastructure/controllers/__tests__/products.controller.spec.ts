@@ -137,7 +137,10 @@ describe('ProductsController', () => {
         );
 
         // Act
-        const result = await controller.createProduct(createProductDto, req);
+        const result = await controller.createProduct(
+          createProductDto,
+          req.user,
+        );
 
         // Assert
         expect(
@@ -163,7 +166,10 @@ describe('ProductsController', () => {
         );
 
         // Act
-        const result = await controller.createProduct(createProductDto, req);
+        const result = await controller.createProduct(
+          createProductDto,
+          req.user,
+        );
 
         // Assert
         expect(mockRepositories.usersRepository.findById).toHaveBeenCalledWith(
@@ -189,7 +195,7 @@ describe('ProductsController', () => {
 
         // Act & Assert
         await expect(
-          controller.createProduct(createProductDto, req),
+          controller.createProduct(createProductDto, req.user),
         ).rejects.toThrow(ForbiddenException);
         expect(mockRepositories.usersRepository.findById).toHaveBeenCalledWith(
           1,
@@ -297,7 +303,7 @@ describe('ProductsController', () => {
         const result = await controller.updateProduct(
           productId,
           updateProductDto,
-          req,
+          req.user,
         );
 
         // Assert
@@ -338,7 +344,7 @@ describe('ProductsController', () => {
         const result = await controller.updateProduct(
           productId,
           updateProductDto,
-          req,
+          req.user,
         );
 
         // Assert
@@ -377,7 +383,7 @@ describe('ProductsController', () => {
 
         // Act & Assert
         await expect(
-          controller.updateProduct(productId, updateProductDto, req),
+          controller.updateProduct(productId, updateProductDto, req.user),
         ).rejects.toThrow(ForbiddenException);
         expect(
           mockProductUseCases.getProductUseCase.execute,
@@ -408,7 +414,7 @@ describe('ProductsController', () => {
         );
 
         // Act
-        await controller.deleteProduct(productId, req);
+        await controller.deleteProduct(productId, req.user);
 
         // Assert
         expect(
@@ -442,7 +448,7 @@ describe('ProductsController', () => {
         );
 
         // Act
-        await controller.deleteProduct(productId, req);
+        await controller.deleteProduct(productId, req.user);
 
         // Assert
         expect(
@@ -476,9 +482,9 @@ describe('ProductsController', () => {
         );
 
         // Act & Assert
-        await expect(controller.deleteProduct(productId, req)).rejects.toThrow(
-          ForbiddenException,
-        );
+        await expect(
+          controller.deleteProduct(productId, req.user),
+        ).rejects.toThrow(ForbiddenException);
         expect(
           mockProductUseCases.getProductUseCase.execute,
         ).toHaveBeenCalledWith(productId);
@@ -515,7 +521,7 @@ describe('ProductsController', () => {
         const result = await controller.uploadProductImage(
           productId,
           file,
-          req,
+          req.user,
         );
 
         // Assert
@@ -556,7 +562,7 @@ describe('ProductsController', () => {
         const result = await controller.uploadProductImage(
           productId,
           file,
-          req,
+          req.user,
         );
 
         // Assert
@@ -587,7 +593,7 @@ describe('ProductsController', () => {
 
         // Act & Assert
         await expect(
-          controller.uploadProductImage(productId, file, req),
+          controller.uploadProductImage(productId, file, req.user),
         ).rejects.toThrow(NotFoundException);
         expect(
           mockProductUseCases.getProductUseCase.execute,
@@ -618,7 +624,10 @@ describe('ProductsController', () => {
         );
 
         // Act
-        const result = await controller.toggleProductFeature(productId, req);
+        const result = await controller.toggleProductFeature(
+          productId,
+          req.user,
+        );
 
         // Assert
         expect(
@@ -651,7 +660,10 @@ describe('ProductsController', () => {
         );
 
         // Act
-        const result = await controller.toggleProductDisable(productId, req);
+        const result = await controller.toggleProductDisable(
+          productId,
+          req.user,
+        );
 
         // Assert
         expect(

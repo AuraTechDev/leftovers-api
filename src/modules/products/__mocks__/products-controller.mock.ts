@@ -3,6 +3,7 @@ import { ProductResponseDto } from '../application/dtos/product-response.dto';
 import { FoodTypeResponseDto } from '../application/dtos/food-type-response.dto';
 import { createMockProductResponseDto } from './product-use-cases.mock';
 import { createMockFoodTypeResponseDto } from './food-type.mock';
+import { UploadedFileType } from '../../cloudinary/interfaces/file-upload.interface';
 
 // Define AuthUser interface locally to avoid import issues
 export interface AuthUser {
@@ -68,16 +69,7 @@ export const createMockAuthUser = (
   ...override,
 });
 
-// Mock for uploaded file
-export interface UploadedFileType {
-  fieldname: string;
-  originalname: string;
-  encoding: string;
-  mimetype: string;
-  buffer: Buffer;
-  size: number;
-}
-
+// Create mock uploaded file helper function
 export const createMockUploadedFile = (
   override: Partial<UploadedFileType> = {},
 ): UploadedFileType => ({
@@ -202,3 +194,6 @@ export const mockFileInterceptor = {
     };
   }),
 };
+
+// Export the interface for use in tests
+export { UploadedFileType };

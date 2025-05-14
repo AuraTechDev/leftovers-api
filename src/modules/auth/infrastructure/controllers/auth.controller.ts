@@ -1,17 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  UseGuards,
-  Patch,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards, Patch } from '@nestjs/common';
 import { RegisterDto } from '../dto/register.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { Roles } from '../decorators/roles.decorator';
 import { RolesGuard } from '../guards/roles.guard';
 import { Role } from '@prisma/client';
+import { GetUser } from '../decorators/get-user.decorator';
 import { AuthUser } from '../../domain/interfaces/user.interface';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
@@ -28,10 +21,6 @@ import {
   UpdateProfileUseCase,
   ChangePasswordUseCase,
 } from '../../application/use-cases';
-
-interface RequestWithUser extends Request {
-  user: AuthUser;
-}
 
 @Controller('auth')
 export class AuthController {
@@ -52,8 +41,8 @@ export class AuthController {
 
   @Post('login')
   @UseGuards(LocalAuthGuard)
-  login(@Req() req: RequestWithUser) {
-    return this.loginUseCase.execute(req.user);
+  login(@GetUser() currentUser: AuthUser) {
+    return this.loginUseCase.execute(currentUser);
   }
 
   // User management routes (admin only)
@@ -80,8 +69,8 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  googleAuthCallback(@Req() req: RequestWithUser) {
-    return this.oauthLoginUseCase.execute(req.user);
+  googleAuthCallback(@GetUser() currentUser: AuthUser) {
+    return this.oauthLoginUseCase.execute(currentUser);
   }
 
   @Get('apple')
@@ -92,32 +81,35 @@ export class AuthController {
 
   @Get('apple/callback')
   @UseGuards(AppleAuthGuard)
-  appleAuthCallback(@Req() req: RequestWithUser) {
-    return this.oauthLoginUseCase.execute(req.user);
+  appleAuthCallback(@GetUser() currentUser: AuthUser) {
+    return this.oauthLoginUseCase.execute(currentUser);
   }
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  getProfile(@Req() req: RequestWithUser) {
-    return req.user;
+  getProfile(@GetUser() currentUser: AuthUser) {
+    return currentUser;
   }
 
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
   updateProfile(
-    @Req() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
-    return this.updateProfileUseCase.execute(req.user.id, updateProfileDto);
+    return this.updateProfileUseCase.execute(currentUser.id, updateProfileDto);
   }
 
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   changePassword(
-    @Req() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
-    return this.changePasswordUseCase.execute(req.user.id, changePasswordDto);
+    return this.changePasswordUseCase.execute(
+      currentUser.id,
+      changePasswordDto,
+    );
   }
 
   @Post('refresh')
