@@ -10,7 +10,4 @@ export interface IRatingsRepository {
   ): Promise<Rating | null>;
   findByProduct(productId: number, limit?: number): Promise<Rating[]>;
   findByBusiness(businessId: number): Promise<Rating[]>;
-  getProductAverageRating(
-    productId: number,
-  ): Promise<{ average: number; count: number }>;
 }
