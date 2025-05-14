@@ -1,58 +1,33 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { BusinessRepository } from '../../infrastructure/repositories/business.repository';
-import { CloudinaryService } from '../../../cloudinary/cloudinary.service';
+import { CloudinaryImageService } from '../../../cloudinary/cloudinary-image.service';
 import { BusinessResponseDto } from '../dtos/business-response.dto';
 import { CLOUDINARY_FOLDERS } from '../../../cloudinary/constants/cloudinary-folders';
+import { Business } from '../../domain/entities/business.entity';
 
 @Injectable()
 export class UploadBusinessLogoUseCase {
   constructor(
     private readonly businessRepository: BusinessRepository,
-    private readonly cloudinaryService: CloudinaryService,
+    private readonly cloudinaryImageService: CloudinaryImageService,
   ) {}
 
   async execute(id: number, file: Buffer): Promise<BusinessResponseDto> {
-    const business = await this.businessRepository.findById(id);
-
-    if (!business) {
-      throw new NotFoundException(`Business with ID ${id} not found`);
-    }
-
-    let oldLogoPublicId: string | null = null;
-
-    if (business.logoUrl) {
-      try {
-        const match = business.logoUrl.match(/\/upload\/(?:v\d+\/)?(.+)\.\w+$/);
-
-        if (match && match[1]) {
-          oldLogoPublicId = match[1];
-        }
-      } catch (error) {
-        console.error('Error parsing old logo URL:', error);
+    try {
+      return await this.cloudinaryImageService.uploadEntityImage({
+        entityId: id,
+        repository: this.businessRepository,
+        imageBuffer: file,
+        cloudinaryFolder: CLOUDINARY_FOLDERS.BUSINESS_LOGOS,
+        imageField: 'logoUrl',
+        responseTransformer: (entity: Business) =>
+          BusinessResponseDto.fromEntity(entity),
+      });
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('not found')) {
+        throw new NotFoundException(`Business with ID ${id} not found`);
       }
+      throw error;
     }
-
-    const uploadResult = await this.cloudinaryService.uploadImage(
-      file,
-      CLOUDINARY_FOLDERS.BUSINESS_LOGOS,
-    );
-
-    const updatedBusiness = {
-      ...business,
-      logoUrl: uploadResult.secure_url,
-    };
-
-    const result = await this.businessRepository.update(id, updatedBusiness);
-
-    if (oldLogoPublicId) {
-      try {
-        await this.cloudinaryService.deleteImage(oldLogoPublicId);
-      } catch (error) {
-        console.error('Error deleting old logo:', error);
-        console.error('Failed to delete public ID:', oldLogoPublicId);
-      }
-    }
-
-    return BusinessResponseDto.fromEntity(result);
   }
 }

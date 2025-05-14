@@ -16,32 +16,25 @@ jest.mock('../../../../cloudinary/constants/cloudinary-folders', () => ({
   },
 }));
 
-// Mock CloudinaryService directly
-jest.mock('../../../../cloudinary/cloudinary.service');
+// Mock CloudinaryImageService directly
+jest.mock('../../../../cloudinary/cloudinary-image.service');
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { UploadProductImageUseCase } from '../upload-product-image.use-case';
 import { ProductsRepository } from '../../../infrastructure/repositories/products.repository';
-import { CloudinaryService } from '../../../../cloudinary/cloudinary.service';
-import {
-  createMockProduct,
-  createMockProductsRepository,
-} from '../../../__mocks__/product-use-cases.mock';
-import {
-  createMockCloudinaryService,
-  createMockCloudinaryUploadResult,
-} from '../../../__mocks__/cloudinary.mock';
+import { CloudinaryImageService } from '../../../../cloudinary/cloudinary-image.service';
+import { createMockProductsRepository } from '../../../__mocks__/product-use-cases.mock';
+import { createMockCloudinaryUploadResult } from '../../../__mocks__/cloudinary.mock';
+import { ProductResponseDto } from '../../dtos/product-response.dto';
 
 // Create types for the mocks
 type MockProductsRepository = ReturnType<typeof createMockProductsRepository>;
-type MockCloudinaryService = ReturnType<typeof createMockCloudinaryService>;
 
 describe('UploadProductImageUseCase', () => {
   let useCase: UploadProductImageUseCase;
   let mockProductsRepository: MockProductsRepository;
-  let mockCloudinaryService: MockCloudinaryService;
-  let consoleErrorSpy: jest.SpyInstance;
+  let cloudinaryImageService: CloudinaryImageService;
 
   // Create a mock buffer for testing
   const mockBuffer = Buffer.from('test image data');
@@ -49,10 +42,11 @@ describe('UploadProductImageUseCase', () => {
   beforeEach(async () => {
     // Create mock repository and service
     mockProductsRepository = createMockProductsRepository();
-    mockCloudinaryService = createMockCloudinaryService();
 
-    // Spy on console.error
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    // Create a simpler mock with just the methods we need
+    const mockCloudinaryImageService = {
+      uploadEntityImage: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -62,18 +56,18 @@ describe('UploadProductImageUseCase', () => {
           useValue: mockProductsRepository,
         },
         {
-          provide: CloudinaryService,
-          useValue: mockCloudinaryService,
+          provide: CloudinaryImageService,
+          useValue: mockCloudinaryImageService,
         },
       ],
     }).compile();
 
     useCase = module.get<UploadProductImageUseCase>(UploadProductImageUseCase);
+    cloudinaryImageService = module.get(CloudinaryImageService);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-    consoleErrorSpy.mockRestore();
   });
 
   it('should be defined', () => {
@@ -84,33 +78,32 @@ describe('UploadProductImageUseCase', () => {
     it('should upload an image and update product successfully', async () => {
       // Arrange
       const productId = 1;
-      const existingProduct = createMockProduct({
-        id: productId,
-        imageUrl: null,
-      });
       const cloudinaryResult = createMockCloudinaryUploadResult();
-      const updatedProduct = createMockProduct({
+
+      // Create a simple response DTO
+      const responseDto = new ProductResponseDto();
+      Object.assign(responseDto, {
         id: productId,
         imageUrl: cloudinaryResult.secure_url,
       });
 
-      mockProductsRepository.findById.mockResolvedValue(existingProduct);
-      mockCloudinaryService.uploadImage.mockResolvedValue(cloudinaryResult);
-      mockProductsRepository.update.mockResolvedValue(updatedProduct);
+      // Setup the mock to return our response
+      jest
+        .spyOn(cloudinaryImageService, 'uploadEntityImage')
+        .mockResolvedValue(responseDto);
 
       // Act
       const result = await useCase.execute(productId, mockBuffer);
 
       // Assert
-      expect(mockProductsRepository.findById).toHaveBeenCalledWith(productId);
-      expect(mockCloudinaryService.uploadImage).toHaveBeenCalledWith(
-        mockBuffer,
-        'products',
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(cloudinaryImageService.uploadEntityImage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entityId: productId,
+          repository: mockProductsRepository,
+          imageBuffer: mockBuffer,
+        }),
       );
-      expect(mockProductsRepository.update).toHaveBeenCalledWith(productId, {
-        imageUrl: cloudinaryResult.secure_url,
-      });
-      expect(mockCloudinaryService.deleteImage).not.toHaveBeenCalled();
       expect(result).toEqual(
         expect.objectContaining({
           id: productId,
@@ -119,183 +112,39 @@ describe('UploadProductImageUseCase', () => {
       );
     });
 
-    it('should replace existing image when product already has an image', async () => {
-      // Arrange
-      const productId = 1;
-      const existingProduct = createMockProduct({
-        id: productId,
-        imageUrl:
-          'https://res.cloudinary.com/test-cloud/image/upload/v1234567890/products/old-image.jpg',
-      });
-      const cloudinaryResult = createMockCloudinaryUploadResult();
-      const updatedProduct = createMockProduct({
-        id: productId,
-        imageUrl: cloudinaryResult.secure_url,
-      });
-
-      mockProductsRepository.findById.mockResolvedValue(existingProduct);
-      mockCloudinaryService.uploadImage.mockResolvedValue(cloudinaryResult);
-      mockProductsRepository.update.mockResolvedValue(updatedProduct);
-      mockCloudinaryService.deleteImage.mockResolvedValue({} as any);
-
-      // Act
-      const result = await useCase.execute(productId, mockBuffer);
-
-      // Assert
-      expect(mockProductsRepository.findById).toHaveBeenCalledWith(productId);
-      expect(mockCloudinaryService.uploadImage).toHaveBeenCalledWith(
-        mockBuffer,
-        'products',
-      );
-      expect(mockProductsRepository.update).toHaveBeenCalledWith(productId, {
-        imageUrl: cloudinaryResult.secure_url,
-      });
-      expect(mockCloudinaryService.deleteImage).toHaveBeenCalledWith(
-        'products/old-image',
-      );
-      expect(result.imageUrl).toEqual(cloudinaryResult.secure_url);
-    });
-
-    it('should handle errors when deleting old image', async () => {
-      // Arrange
-      const productId = 1;
-      const existingProduct = createMockProduct({
-        id: productId,
-        imageUrl:
-          'https://res.cloudinary.com/test-cloud/image/upload/v1234567890/products/old-image.jpg',
-      });
-      const cloudinaryResult = createMockCloudinaryUploadResult();
-      const updatedProduct = createMockProduct({
-        id: productId,
-        imageUrl: cloudinaryResult.secure_url,
-      });
-      const deleteError = new Error('Failed to delete image');
-
-      mockProductsRepository.findById.mockResolvedValue(existingProduct);
-      mockCloudinaryService.uploadImage.mockResolvedValue(cloudinaryResult);
-      mockProductsRepository.update.mockResolvedValue(updatedProduct);
-      mockCloudinaryService.deleteImage.mockRejectedValue(deleteError);
-
-      // Act
-      const result = await useCase.execute(productId, mockBuffer);
-
-      // Assert
-      expect(mockProductsRepository.findById).toHaveBeenCalledWith(productId);
-      expect(mockCloudinaryService.uploadImage).toHaveBeenCalledWith(
-        mockBuffer,
-        'products',
-      );
-      expect(mockProductsRepository.update).toHaveBeenCalledWith(productId, {
-        imageUrl: cloudinaryResult.secure_url,
-      });
-      expect(mockCloudinaryService.deleteImage).toHaveBeenCalledWith(
-        'products/old-image',
-      );
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
-      expect(consoleErrorSpy).toHaveBeenNthCalledWith(
-        1,
-        'Error deleting old product image:',
-        deleteError,
-      );
-      expect(consoleErrorSpy).toHaveBeenNthCalledWith(
-        2,
-        'Failed to delete public ID:',
-        'products/old-image',
-      );
-      expect(result.imageUrl).toEqual(cloudinaryResult.secure_url);
-    });
-
-    it('should handle invalid image URL formats gracefully', async () => {
-      // Arrange
-      const productId = 1;
-      const existingProduct = createMockProduct({
-        id: productId,
-        imageUrl: 'https://invalid-url-format.jpg', // Invalid format for Cloudinary URLs
-      });
-      const cloudinaryResult = createMockCloudinaryUploadResult();
-      const updatedProduct = createMockProduct({
-        id: productId,
-        imageUrl: cloudinaryResult.secure_url,
-      });
-
-      mockProductsRepository.findById.mockResolvedValue(existingProduct);
-      mockCloudinaryService.uploadImage.mockResolvedValue(cloudinaryResult);
-      mockProductsRepository.update.mockResolvedValue(updatedProduct);
-
-      // Act
-      const result = await useCase.execute(productId, mockBuffer);
-
-      // Assert
-      expect(mockProductsRepository.findById).toHaveBeenCalledWith(productId);
-      expect(mockCloudinaryService.uploadImage).toHaveBeenCalledWith(
-        mockBuffer,
-        'products',
-      );
-      expect(mockProductsRepository.update).toHaveBeenCalledWith(productId, {
-        imageUrl: cloudinaryResult.secure_url,
-      });
-      expect(mockCloudinaryService.deleteImage).not.toHaveBeenCalled();
-      expect(result.imageUrl).toEqual(cloudinaryResult.secure_url);
-    });
-
     it('should throw NotFoundException when product does not exist', async () => {
       // Arrange
       const productId = 999;
-      mockProductsRepository.findById.mockResolvedValue(null);
+
+      // Setup mock to throw error that will be caught and converted to NotFoundException
+      jest
+        .spyOn(cloudinaryImageService, 'uploadEntityImage')
+        .mockImplementation(() => {
+          throw new Error('Entity with ID 999 not found');
+        });
 
       // Act & Assert
       await expect(useCase.execute(productId, mockBuffer)).rejects.toThrow(
         NotFoundException,
       );
-      expect(mockProductsRepository.findById).toHaveBeenCalledWith(productId);
-      expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
-      expect(mockProductsRepository.update).not.toHaveBeenCalled();
     });
 
-    it('should propagate errors from Cloudinary service', async () => {
+    it('should propagate other errors', async () => {
       // Arrange
       const productId = 1;
-      const existingProduct = createMockProduct({ id: productId });
-      const uploadError = new Error('Cloudinary upload error');
+      const testError = new Error('Test error');
 
-      mockProductsRepository.findById.mockResolvedValue(existingProduct);
-      mockCloudinaryService.uploadImage.mockRejectedValue(uploadError);
+      // Setup mock to throw a generic error
+      jest
+        .spyOn(cloudinaryImageService, 'uploadEntityImage')
+        .mockImplementation(() => {
+          throw testError;
+        });
 
       // Act & Assert
       await expect(useCase.execute(productId, mockBuffer)).rejects.toThrow(
-        uploadError,
+        testError,
       );
-      expect(mockProductsRepository.findById).toHaveBeenCalledWith(productId);
-      expect(mockCloudinaryService.uploadImage).toHaveBeenCalledWith(
-        mockBuffer,
-        'products',
-      );
-      expect(mockProductsRepository.update).not.toHaveBeenCalled();
-    });
-
-    it('should propagate errors from repository update', async () => {
-      // Arrange
-      const productId = 1;
-      const existingProduct = createMockProduct({ id: productId });
-      const cloudinaryResult = createMockCloudinaryUploadResult();
-      const updateError = new Error('Database update error');
-
-      mockProductsRepository.findById.mockResolvedValue(existingProduct);
-      mockCloudinaryService.uploadImage.mockResolvedValue(cloudinaryResult);
-      mockProductsRepository.update.mockRejectedValue(updateError);
-
-      // Act & Assert
-      await expect(useCase.execute(productId, mockBuffer)).rejects.toThrow(
-        updateError,
-      );
-      expect(mockProductsRepository.findById).toHaveBeenCalledWith(productId);
-      expect(mockCloudinaryService.uploadImage).toHaveBeenCalledWith(
-        mockBuffer,
-        'products',
-      );
-      expect(mockProductsRepository.update).toHaveBeenCalledWith(productId, {
-        imageUrl: cloudinaryResult.secure_url,
-      });
     });
   });
 });
