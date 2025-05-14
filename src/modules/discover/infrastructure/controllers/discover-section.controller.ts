@@ -24,6 +24,10 @@ import { UpdateDiscoverSectionUseCase } from '../../application/use-cases/update
 import { DeleteDiscoverSectionUseCase } from '../../application/use-cases/delete-discover-section.use-case';
 import { DiscoverSectionResponseDto } from '../../application/dtos/discover-section-response.dto';
 
+/**
+ * Controller for managing discover sections
+ * IMPORTANT: All endpoints in this controller are restricted to SUPER_ADMIN role only
+ */
 @Controller('discover-sections')
 export class DiscoverSectionController {
   constructor(
