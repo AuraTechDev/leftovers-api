@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { RatingsRepository } from '../../infrastructure/repositories/ratings.repository';
-import { ProductsRepository } from '../../../products/infrastructure/repositories/products.repository';
+import { RatingsRepository } from '../../../ratings/infrastructure/repositories/ratings.repository';
+import { ProductsRepository } from '../../infrastructure/repositories/products.repository';
 import {
-  ProductRatingsResponseDto,
   ProductRatingItemDto,
+  ProductRatingsResponseDto,
 } from '../dtos/product-ratings-response.dto';
 
 @Injectable()
@@ -14,24 +14,20 @@ export class GetProductRatingsUseCase {
   ) {}
 
   async execute(productId: number): Promise<ProductRatingsResponseDto> {
-    // Check if product exists
     const product = await this.productsRepository.findById(productId);
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    // Get average rating and count
     const { average, count } =
       await this.ratingsRepository.getProductAverageRating(productId);
 
-    // Get the 10 most recent ratings
     const ratingsData = await this.ratingsRepository.findByProduct(
       productId,
       10,
     );
 
-    // Map the ratings to the expected format
     const ratings = ratingsData.map(
       (rating) =>
         ({
