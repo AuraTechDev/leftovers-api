@@ -25,7 +25,7 @@ import { AuthUser } from '../../../auth/domain/interfaces/user.interface';
 import { UsersRepository } from '../../../users/infrastructure/repositories/users.repository';
 import { BusinessRepository } from '../../../business/infrastructure/repositories/business.repository';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { imageUploadOptions } from '../config/file-upload.config';
+import { imageUploadOptions } from '../../../cloudinary/constants/upload-options';
 import { UploadedFileType } from '../../../cloudinary/interfaces/file-upload.interface';
 import { GetUser } from '../../../auth/infrastructure/decorators/get-user.decorator';
 

@@ -1,9 +1,14 @@
 import { BadRequestException } from '@nestjs/common';
-import { UploadedFileType } from '../../../cloudinary/interfaces/file-upload.interface';
+import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
+import { UploadedFileType } from '../interfaces/file-upload.interface';
 
 type FileFilterCallback = (error: Error | null, acceptFile: boolean) => void;
 
-export const imageUploadOptions = {
+/**
+ * Common configuration options for image uploads across the application
+ * This can be used by any module that needs to handle image uploads
+ */
+export const imageUploadOptions: MulterOptions = {
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB max file size
   },

@@ -33,7 +33,7 @@ import { UploadBusinessLogoUseCase } from '../../application/use-cases/upload-bu
 import { UploadBusinessBannerUseCase } from '../../application/use-cases/upload-business-banner.use-case';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BusinessResponseDto } from '../../application/dtos/business-response.dto';
-import { imageUploadOptions } from '../config/file-upload.config';
+import { imageUploadOptions } from '../../../cloudinary/constants/upload-options';
 import { GetUser } from '../../../auth/infrastructure/decorators/get-user.decorator';
 import { UploadedFileType } from '../../../cloudinary/interfaces/file-upload.interface';
 
