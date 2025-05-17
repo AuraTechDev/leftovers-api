@@ -19,6 +19,8 @@ import {
   AuthResponseDto,
   UserDto,
 } from '../../../application/dtos/auth-response.dto';
+import { UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Response } from 'express';
 
 // Create RequestWithUser interface
 interface RequestWithUser extends Request {
@@ -143,34 +145,96 @@ describe('AuthController', () => {
   });
 
   describe('register', () => {
-    it('should register a new user', async () => {
+    it('should register a new user successfully', async () => {
       const registerDto: RegisterDto = {
-        email: 'newuser@example.com',
+        email: 'new@example.com',
+        password: 'Password123!',
         name: 'New User',
-        password: 'password123',
       };
 
-      registerUseCase.execute.mockResolvedValue(mockRegisterResponse);
+      const mockResult = {
+        user: {
+          id: 'user-123',
+          email: 'new@example.com',
+          name: 'New User',
+          roles: [Role.USER],
+        },
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token',
+        expiresIn: 900, // 15 minutes in seconds
+      };
+
+      registerUseCase.execute.mockResolvedValue(mockResult);
 
       const result = await controller.register(registerDto);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(registerUseCase.execute).toHaveBeenCalledWith(registerDto);
-      expect(result).toEqual(mockRegisterResponse);
+      expect(result).toEqual({
+        user: {
+          id: mockResult.user.id,
+          email: mockResult.user.email,
+          name: mockResult.user.name,
+          roles: mockResult.user.roles,
+        },
+        accessToken: mockResult.accessToken,
+        refreshToken: mockResult.refreshToken,
+        expiresIn: mockResult.expiresIn,
+      });
+    });
+
+    it('should throw BadRequestException when registration fails', async () => {
+      const registerDto: RegisterDto = {
+        email: 'existing@example.com',
+        password: 'Password123!',
+        name: 'Existing User',
+      };
+
+      registerUseCase.execute.mockRejectedValue(new Error('Email already in use'));
+
+      await expect(controller.register(registerDto)).rejects.toThrow(BadRequestException);
+      expect(registerUseCase.execute).toHaveBeenCalledWith(registerDto);
     });
   });
 
   describe('login', () => {
-    it('should login a user', async () => {
+    it('should login a user successfully', async () => {
       const req = { user: mockUser } as RequestWithUser;
+      const loginDto = {
+        email: 'user@example.com',
+        password: 'Password123!',
+      };
 
-      loginUseCase.execute.mockResolvedValue(mockLoginResponse);
+      const mockResult = {
+        user: {
+          id: mockUser.id,
+          email: mockUser.email,
+          name: mockUser.name,
+          roles: [mockUser.role],
+        },
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token',
+        expiresIn: 900, // 15 minutes in seconds
+      };
 
-      const result = await controller.login(req.user);
+      loginUseCase.execute.mockResolvedValue(mockResult);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(loginUseCase.execute).toHaveBeenCalledWith(mockUser);
-      expect(result).toEqual(mockLoginResponse);
+      const result = await controller.login(req, loginDto);
+
+      expect(loginUseCase.execute).toHaveBeenCalledWith({
+        email: loginDto.email,
+        userId: req.user.id,
+      });
+      expect(result).toEqual({
+        user: {
+          id: mockResult.user.id,
+          email: mockResult.user.email,
+          name: mockResult.user.name,
+          roles: mockResult.user.roles,
+        },
+        accessToken: mockResult.accessToken,
+        refreshToken: mockResult.refreshToken,
+        expiresIn: mockResult.expiresIn,
+      });
     });
   });
 
@@ -184,7 +248,6 @@ describe('AuthController', () => {
 
       const result = await controller.refreshTokens(refreshTokenDto);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(refreshTokensUseCase.execute).toHaveBeenCalledWith(
         refreshTokenDto.refreshToken,
       );
@@ -193,20 +256,21 @@ describe('AuthController', () => {
   });
 
   describe('logout', () => {
-    it('should logout user', async () => {
-      const refreshTokenDto: RefreshTokenDto = {
-        refreshToken: 'test-refresh-token',
+    it('should logout a user successfully', async () => {
+      const req = {
+        user: {
+          id: 'user-123',
+        },
       };
 
       logoutUseCase.execute.mockResolvedValue(undefined);
 
-      const result = await controller.logout(refreshTokenDto);
+      const result = await controller.logout(req);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(logoutUseCase.execute).toHaveBeenCalledWith(
-        refreshTokenDto.refreshToken,
-      );
-      expect(result).toEqual({ message: 'Logged out successfully' });
+      expect(logoutUseCase.execute).toHaveBeenCalledWith({
+        userId: req.user.id,
+      });
+      expect(result).toEqual({ success: true });
     });
   });
 
@@ -241,28 +305,81 @@ describe('AuthController', () => {
   });
 
   describe('OAuth callbacks', () => {
-    it('should login a user after Google authentication', async () => {
-      const req = { user: mockUser } as RequestWithUser;
+    it('should handle Google callback and redirect with success', async () => {
+      const req = {
+        user: {
+          id: 'user-123',
+        },
+      } as RequestWithUser;
+      const res = {
+        redirect: jest.fn(),
+        cookie: jest.fn(),
+      } as unknown as Response;
 
-      oauthLoginUseCase.execute.mockResolvedValue(mockLoginResponse);
+      const mockResult = {
+        user: {
+          id: 'user-123',
+          email: 'user@gmail.com',
+        },
+        accessToken: 'oauth-access-token',
+        refreshToken: 'oauth-refresh-token',
+      };
 
-      const result = await controller.googleAuthCallback(req.user);
+      oauthLoginUseCase.execute.mockResolvedValue(mockResult);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(oauthLoginUseCase.execute).toHaveBeenCalledWith(mockUser);
-      expect(result).toEqual(mockLoginResponse);
+      await controller.googleAuthCallback(req, res);
+
+      expect(oauthLoginUseCase.execute).toHaveBeenCalledWith({
+        userId: req.user.id,
+      });
+      expect(res.redirect).toHaveBeenCalled();
     });
 
-    it('should login a user after Apple authentication', async () => {
-      const req = { user: mockUser } as RequestWithUser;
+    it('should handle Apple callback and redirect with success', async () => {
+      const req = {
+        user: {
+          id: 'user-123',
+        },
+      } as RequestWithUser;
+      const res = {
+        redirect: jest.fn(),
+        cookie: jest.fn(),
+      } as unknown as Response;
 
-      oauthLoginUseCase.execute.mockResolvedValue(mockLoginResponse);
+      const mockResult = {
+        user: {
+          id: 'user-123',
+          email: 'user@icloud.com',
+        },
+        accessToken: 'oauth-access-token',
+        refreshToken: 'oauth-refresh-token',
+      };
 
-      const result = await controller.appleAuthCallback(req.user);
+      oauthLoginUseCase.execute.mockResolvedValue(mockResult);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(oauthLoginUseCase.execute).toHaveBeenCalledWith(mockUser);
-      expect(result).toEqual(mockLoginResponse);
+      await controller.appleAuthCallback(req, res);
+
+      expect(oauthLoginUseCase.execute).toHaveBeenCalledWith({
+        userId: req.user.id,
+      });
+      expect(res.redirect).toHaveBeenCalled();
+    });
+
+    it('should redirect to failure page when OAuth login fails', async () => {
+      const req = {
+        user: {
+          id: 'user-123',
+        },
+      } as RequestWithUser;
+      const res = {
+        redirect: jest.fn(),
+      } as unknown as Response;
+
+      oauthLoginUseCase.execute.mockRejectedValue(new Error('OAuth login failed'));
+
+      await controller.googleAuthCallback(req, res);
+
+      expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('failure'));
     });
   });
 
@@ -275,7 +392,6 @@ describe('AuthController', () => {
         photoUrl: 'https://updated-photo-url.com',
       };
 
-      // Mocked response from service with required User properties
       const updatedUser: UserDto = {
         id: mockUser.id,
         name: updateProfileDto.name!,
@@ -290,7 +406,6 @@ describe('AuthController', () => {
 
       const result = await controller.updateProfile(req.user, updateProfileDto);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(updateProfileUseCase.execute).toHaveBeenCalledWith(
         mockUser.id,
         updateProfileDto,
@@ -314,7 +429,6 @@ describe('AuthController', () => {
         changePasswordDto,
       );
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(changePasswordUseCase.execute).toHaveBeenCalledWith(
         mockUser.id,
         changePasswordDto,
