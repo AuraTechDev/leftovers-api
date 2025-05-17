@@ -31,10 +31,14 @@ export class RatingsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.BUSINESS)
   async getBusinessRatings(
-    @GetUser('id') userId: number,
+    @GetUser() currentUser: AuthUser,
     @GetUser('businessId') businessId: number,
     @Query() query: BusinessRatingsQueryDto,
   ) {
-    return this.getBusinessRatingsUseCase.execute(userId, businessId, query);
+    return this.getBusinessRatingsUseCase.execute(
+      currentUser.id,
+      businessId,
+      query,
+    );
   }
 }
