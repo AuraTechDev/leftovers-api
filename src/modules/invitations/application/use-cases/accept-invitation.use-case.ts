@@ -36,6 +36,11 @@ export class AcceptInvitationUseCase {
       }
     }
 
+    // Additional security check: validate the invitation hasn't been tampered with
+    if (!invitation.validateToken(acceptInvitationDto.token)) {
+      throw new BadRequestException('Invalid invitation token');
+    }
+
     // Check if email is already in use by another user
     const existingUser = await this.prisma.user.findUnique({
       where: { email: invitation.email },

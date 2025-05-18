@@ -85,6 +85,43 @@ export class InvitationsRepository implements IInvitationsRepository {
     return invitations.map((invitation) => this.mapToEntity(invitation));
   }
 
+  async countRecentInvitationsByEmail(
+    email: string,
+    hours: number = 24,
+  ): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setHours(cutoffDate.getHours() - hours);
+
+    const count = await this.prisma.businessInvitation.count({
+      where: {
+        email,
+        createdAt: {
+          gte: cutoffDate,
+        },
+      },
+    });
+
+    return count;
+  }
+
+  async markExpiredInvitations(): Promise<number> {
+    const now = new Date();
+
+    const result = await this.prisma.businessInvitation.updateMany({
+      where: {
+        expiresAt: {
+          lt: now,
+        },
+        status: BusinessInvitationStatus.PENDING,
+      },
+      data: {
+        status: BusinessInvitationStatus.EXPIRED,
+      },
+    });
+
+    return result.count;
+  }
+
   private mapToEntity(data: {
     id: number;
     email: string;

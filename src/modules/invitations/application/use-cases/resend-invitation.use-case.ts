@@ -47,6 +47,17 @@ export class ResendInvitationUseCase {
       throw new BadRequestException('Only pending invitations can be resent');
     }
 
+    // Rate limiting: Check the last update time and enforce a minimum gap (e.g., 1 hour)
+    const lastUpdateTime = new Date(invitation.updatedAt).getTime();
+    const currentTime = new Date().getTime();
+    const hourInMs = 60 * 60 * 1000;
+
+    if (currentTime - lastUpdateTime < hourInMs) {
+      throw new BadRequestException(
+        'Please wait at least 1 hour before resending an invitation',
+      );
+    }
+
     // Generate a new token and update expiration date
     const token = randomBytes(32).toString('hex');
     const expiresAt = new Date();

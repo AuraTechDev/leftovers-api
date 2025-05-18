@@ -3,6 +3,7 @@ import {
   ConflictException,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InvitationsRepository } from '../../infrastructure/repositories/invitations.repository';
 import { SendInvitationDto } from '../../infrastructure/dto/send-invitation.dto';
@@ -55,6 +56,19 @@ export class SendInvitationUseCase {
       throw new ConflictException('User with this email already exists');
     }
 
+    // Rate limiting: Check how many invitations have been sent to this email in the last 24 hours
+    const recentInvitations =
+      await this.invitationsRepository.countRecentInvitationsByEmail(
+        sendInvitationDto.email,
+      );
+
+    const MAX_INVITATIONS_PER_DAY = 3;
+    if (recentInvitations >= MAX_INVITATIONS_PER_DAY) {
+      throw new BadRequestException(
+        `Too many invitations sent to this email. Maximum ${MAX_INVITATIONS_PER_DAY} invitations per day allowed.`,
+      );
+    }
+
     // Check if there's already a pending invitation for this email/business
     const existingInvitation =
       await this.invitationsRepository.findByEmailAndBusinessId(
@@ -62,22 +76,20 @@ export class SendInvitationUseCase {
         sendInvitationDto.businessId,
       );
 
-    if (
-      existingInvitation &&
-      existingInvitation.isPending() &&
-      !existingInvitation.isExpired()
-    ) {
-      throw new ConflictException(
-        'An invitation for this email and business already exists',
-      );
+    // Set expiration to 3 days from now (changed from 7)
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 3);
+
+    // If there's an existing invitation that's expired or already used, invalidate it first
+    if (existingInvitation) {
+      await this.invitationsRepository.update(existingInvitation.id, {
+        status: BusinessInvitationStatus.EXPIRED,
+        updatedAt: new Date(),
+      });
     }
 
     // Generate a secure token
     const token = randomBytes(32).toString('hex');
-
-    // Set expiration to 7 days from now
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
 
     // Create invitation
     const invitation = new BusinessInvitation({
