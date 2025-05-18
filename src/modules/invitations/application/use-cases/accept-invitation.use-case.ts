@@ -67,7 +67,6 @@ export class AcceptInvitationUseCase {
         where: { id: invitation.id },
         data: {
           status: BusinessInvitationStatus.ACCEPTED,
-          updatedAt: new Date(),
         },
       });
 
