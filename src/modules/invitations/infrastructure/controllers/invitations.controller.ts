@@ -7,7 +7,6 @@ import {
   Query,
   Param,
   ParseIntPipe,
-  Req,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
@@ -19,14 +18,8 @@ import { SendInvitationUseCase } from '../../application/use-cases/send-invitati
 import { ValidateInvitationUseCase } from '../../application/use-cases/validate-invitation.use-case';
 import { AcceptInvitationUseCase } from '../../application/use-cases/accept-invitation.use-case';
 import { ResendInvitationUseCase } from '../../application/use-cases/resend-invitation.use-case';
-
-// Define the request type with a user property
-interface RequestWithUser extends Request {
-  user: {
-    id: number;
-    role: Role;
-  };
-}
+import { GetUser } from '../../../auth/infrastructure/decorators/get-user.decorator';
+import { AuthUser } from '../../../auth/domain/interfaces/user.interface';
 
 @Controller('invitations')
 export class InvitationsController {
@@ -42,9 +35,12 @@ export class InvitationsController {
   @Roles(Role.SUPER_ADMIN)
   async sendInvitation(
     @Body() sendInvitationDto: SendInvitationDto,
-    @Req() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ) {
-    return this.sendInvitationUseCase.execute(sendInvitationDto, req.user.id);
+    return this.sendInvitationUseCase.execute(
+      sendInvitationDto,
+      currentUser.id,
+    );
   }
 
   @Get('validate')
@@ -62,9 +58,9 @@ export class InvitationsController {
   @Roles(Role.SUPER_ADMIN)
   async resendInvitation(
     @Param('id', ParseIntPipe) id: number,
-    @Req() req: RequestWithUser,
+    @GetUser() currentUser: AuthUser,
   ) {
-    await this.resendInvitationUseCase.execute(id, req.user.id);
+    await this.resendInvitationUseCase.execute(id, currentUser.id);
     return { message: 'Invitation resent successfully' };
   }
 }
