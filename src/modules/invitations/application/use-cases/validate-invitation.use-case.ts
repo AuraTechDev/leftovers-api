@@ -17,7 +17,6 @@ export class ValidateInvitationUseCase {
       return InvitationResponseDto.fromEntity(null);
     }
 
-    // Get business name
     const business = await this.prisma.business.findUnique({
       where: { id: invitation.businessId },
     });
