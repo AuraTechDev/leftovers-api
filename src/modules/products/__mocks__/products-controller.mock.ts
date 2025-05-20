@@ -1,7 +1,7 @@
 import { Role, Provider } from '@prisma/client';
 import { createMockProductResponseDto } from './product-use-cases.mock';
 import { AuthUser } from '../../auth/domain/interfaces/user.interface';
-import { UploadedFileType } from '../../cloudinary/interfaces/file-upload.interface';
+import { UploadedFileType } from '../../cloudinary/domain/interfaces/file-upload.interface';
 
 export const createMockAuthUser = (
   overrides: Partial<AuthUser> = {},

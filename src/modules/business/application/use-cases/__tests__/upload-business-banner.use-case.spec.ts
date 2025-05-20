@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { UploadBusinessBannerUseCase } from '../upload-business-banner.use-case';
 import { BusinessRepository } from '../../../infrastructure/repositories/business.repository';
-import { CloudinaryImageService } from '../../../../cloudinary/cloudinary-image.service';
+import { CloudinaryImageService } from '../../../../cloudinary/infrastructure/services/cloudinary-image.service';
 import { CLOUDINARY_FOLDERS } from '../../../../cloudinary/constants/cloudinary-folders';
 import { mockCloudinaryUploadResult } from '../../../__mocks__/business.mocks';
 import { BusinessResponseDto } from '../../dtos/business-response.dto';

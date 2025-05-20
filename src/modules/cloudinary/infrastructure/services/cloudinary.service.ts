@@ -5,11 +5,11 @@ import {
   UploadApiResponse,
   AdminAndResourceOptions,
 } from 'cloudinary';
-import { env } from '../../config/env.config';
+import { env } from '../../../../config/env.config';
 import { Readable } from 'stream';
-import { CacheEntry } from './interfaces/cache-entry.interface';
-import { CloudinaryFolderResponse } from './interfaces/folder-response.interface';
-import { CloudinaryResourcesResponse } from './interfaces/resource-response.interface';
+import { CacheEntry } from '../../domain/interfaces/cache-entry.interface';
+import { CloudinaryFolderResponse } from '../../domain/interfaces/folder-response.interface';
+import { CloudinaryResourcesResponse } from '../../domain/interfaces/resource-response.interface';
 
 // Type for transformations
 type TransformationOption =

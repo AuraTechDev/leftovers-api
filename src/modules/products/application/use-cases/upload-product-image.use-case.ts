@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CloudinaryImageService } from '../../../cloudinary/cloudinary-image.service';
+import { CloudinaryImageService } from '../../../cloudinary/infrastructure/services/cloudinary-image.service';
 import { ProductsRepository } from '../../infrastructure/repositories/products.repository';
 import { ProductResponseDto } from '../dtos/product-response.dto';
 import { CLOUDINARY_FOLDERS } from '../../../cloudinary/constants/cloudinary-folders';

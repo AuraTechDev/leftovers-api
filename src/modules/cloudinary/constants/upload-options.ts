@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
-import { UploadedFileType } from '../interfaces/file-upload.interface';
+import { UploadedFileType } from '../domain/interfaces/file-upload.interface';
 
 type FileFilterCallback = (error: Error | null, acceptFile: boolean) => void;
 

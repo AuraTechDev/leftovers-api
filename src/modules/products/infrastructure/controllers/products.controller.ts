@@ -26,7 +26,7 @@ import { UsersRepository } from '../../../users/infrastructure/repositories/user
 import { BusinessRepository } from '../../../business/infrastructure/repositories/business.repository';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { imageUploadOptions } from '../../../cloudinary/constants/upload-options';
-import { UploadedFileType } from '../../../cloudinary/interfaces/file-upload.interface';
+import { UploadedFileType } from '../../../cloudinary/domain/interfaces/file-upload.interface';
 import { GetUser } from '../../../auth/infrastructure/decorators/get-user.decorator';
 
 // Products Use Cases
