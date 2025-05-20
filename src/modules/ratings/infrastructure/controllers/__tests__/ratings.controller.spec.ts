@@ -67,7 +67,10 @@ describe('RatingsController', () => {
       mockSubmitRatingUseCase.execute.mockResolvedValue(mockRating);
 
       // Act
-      const result = await controller.submitRating(mockUser, createRatingDto);
+      const result = await controller.submitRating(
+        mockUser.id,
+        createRatingDto,
+      );
 
       // Assert
       expect(mockSubmitRatingUseCase.execute).toHaveBeenCalledWith(
@@ -93,7 +96,7 @@ describe('RatingsController', () => {
 
       // Act & Assert
       await expect(
-        controller.submitRating(mockUser, createRatingDto),
+        controller.submitRating(mockUser.id, createRatingDto),
       ).rejects.toThrow(BadRequestException);
       expect(mockSubmitRatingUseCase.execute).toHaveBeenCalledWith(
         userId,
@@ -117,7 +120,7 @@ describe('RatingsController', () => {
 
       // Act & Assert
       await expect(
-        controller.submitRating(mockUser, createRatingDto),
+        controller.submitRating(mockUser.id, createRatingDto),
       ).rejects.toThrow(UnauthorizedException);
       expect(mockSubmitRatingUseCase.execute).toHaveBeenCalledWith(
         userId,
@@ -129,7 +132,6 @@ describe('RatingsController', () => {
   describe('getBusinessRatings', () => {
     it('should return business ratings successfully', async () => {
       // Arrange
-      const userId = 2;
       const businessId = 789;
       const query: BusinessRatingsQueryDto = {
         productId: 456,
@@ -140,15 +142,10 @@ describe('RatingsController', () => {
       mockGetBusinessRatingsUseCase.execute.mockResolvedValue(mockRatings);
 
       // Act
-      const result = await controller.getBusinessRatings(
-        mockUser,
-        businessId,
-        query,
-      );
+      const result = await controller.getBusinessRatings(businessId, query);
 
       // Assert
       expect(mockGetBusinessRatingsUseCase.execute).toHaveBeenCalledWith(
-        userId,
         businessId,
         query,
       );
@@ -157,7 +154,6 @@ describe('RatingsController', () => {
 
     it('should return empty array when no ratings are found', async () => {
       // Arrange
-      const userId = 2;
       const businessId = 789;
       const query: BusinessRatingsQueryDto = {
         productId: 999, // non-existent product
@@ -165,15 +161,10 @@ describe('RatingsController', () => {
       mockGetBusinessRatingsUseCase.execute.mockResolvedValue([]);
 
       // Act
-      const result = await controller.getBusinessRatings(
-        mockUser,
-        businessId,
-        query,
-      );
+      const result = await controller.getBusinessRatings(businessId, query);
 
       // Assert
       expect(mockGetBusinessRatingsUseCase.execute).toHaveBeenCalledWith(
-        userId,
         businessId,
         query,
       );

@@ -94,22 +94,19 @@ export class AuthController {
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
   updateProfile(
-    @GetUser() currentUser: AuthUser,
+    @GetUser('id') userId: number,
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
-    return this.updateProfileUseCase.execute(currentUser.id, updateProfileDto);
+    return this.updateProfileUseCase.execute(userId, updateProfileDto);
   }
 
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   changePassword(
-    @GetUser() currentUser: AuthUser,
+    @GetUser('id') userId: number,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
-    return this.changePasswordUseCase.execute(
-      currentUser.id,
-      changePasswordDto,
-    );
+    return this.changePasswordUseCase.execute(userId, changePasswordDto);
   }
 
   @Post('refresh')
