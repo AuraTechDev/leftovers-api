@@ -14,8 +14,14 @@ const envSchema = z.object({
   // OAuth
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CALLBACK_URL: z.string().optional(),
+  GOOGLE_SCOPE: z.union([z.string(), z.array(z.string())]).optional(),
   APPLE_CLIENT_ID: z.string().optional(),
   APPLE_CLIENT_SECRET: z.string().optional(),
+  APPLE_CALLBACK_URL: z.string().optional(),
+  APPLE_KEY_ID: z.string().optional(),
+  APPLE_PRIVATE_KEY_LOCATION: z.string().optional(),
+  APPLE_SCOPE: z.union([z.string(), z.array(z.string())]).optional(),
 
   // Cloudinary
   CLOUDINARY_CLOUD_NAME: z.string(),
