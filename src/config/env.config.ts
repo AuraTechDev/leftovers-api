@@ -32,7 +32,7 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url(),
 
   // Resend
-  RESEND_API_KEY: z.string(),
+  RESEND_API_KEY: z.string().min(1),
 });
 
 export type Env = z.infer<typeof envSchema>;
