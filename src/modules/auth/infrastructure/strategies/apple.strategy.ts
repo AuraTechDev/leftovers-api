@@ -22,11 +22,11 @@ export class AppleStrategy extends PassportStrategy(Strategy as any, 'apple') {
     super({
       clientID: env.APPLE_CLIENT_ID,
       teamID: env.APPLE_CLIENT_SECRET,
-      callbackURL: 'http://localhost:3000/auth/apple/callback',
-      keyID: 'your_key_id',
-      privateKeyLocation: 'path/to/key',
+      callbackURL: env.APPLE_CALLBACK_URL,
+      keyID: env.APPLE_KEY_ID,
+      privateKeyLocation: env.APPLE_PRIVATE_KEY_LOCATION,
       passReqToCallback: true,
-      scope: ['name', 'email'],
+      scope: env.APPLE_SCOPE || ['name', 'email'],
     });
   }
 
@@ -47,6 +47,7 @@ export class AppleStrategy extends PassportStrategy(Strategy as any, 'apple') {
       const email = profile.email || `${appleUserId}@apple.user`;
 
       let name = `Apple User ${appleUserId.substring(0, 5)}`;
+
       if (profile.name?.firstName) {
         name =
           `${profile.name.firstName} ${profile.name.lastName || ''}`.trim();
