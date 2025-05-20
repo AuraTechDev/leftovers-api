@@ -1,12 +1,5 @@
+import { IEmailParams } from './email-params.interface';
+
 export interface IEmailSender {
-  sendEmail(params: {
-    to: string | string[];
-    subject: string;
-    html: string;
-    from?: string;
-    text?: string;
-    replyTo?: string;
-    cc?: string[];
-    bcc?: string[];
-  }): Promise<void>;
+  sendEmail(params: IEmailParams): Promise<void>;
 }
