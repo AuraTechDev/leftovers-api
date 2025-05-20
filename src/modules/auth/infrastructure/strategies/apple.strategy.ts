@@ -19,9 +19,6 @@ interface AppleProfile {
 @Injectable()
 export class AppleStrategy extends PassportStrategy(Strategy as any, 'apple') {
   constructor(private validateOAuthUserUseCase: ValidateOAuthUserUseCase) {
-    if (!env.APPLE_CLIENT_ID || !env.APPLE_CLIENT_SECRET || !env.APPLE_CALLBACK_URL || !env.APPLE_KEY_ID || !env.APPLE_PRIVATE_KEY_LOCATION) {
-      throw new Error('Missing required Apple OAuth environment variables');
-    }
     super({
       clientID: env.APPLE_CLIENT_ID,
       teamID: env.APPLE_CLIENT_SECRET,
@@ -50,6 +47,7 @@ export class AppleStrategy extends PassportStrategy(Strategy as any, 'apple') {
       const email = profile.email || `${appleUserId}@apple.user`;
 
       let name = `Apple User ${appleUserId.substring(0, 5)}`;
+
       if (profile.name?.firstName) {
         name =
           `${profile.name.firstName} ${profile.name.lastName || ''}`.trim();

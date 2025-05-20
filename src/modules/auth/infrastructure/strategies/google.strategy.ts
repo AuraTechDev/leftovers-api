@@ -38,9 +38,11 @@ export class GoogleStrategy extends PassportStrategy(
   ) {
     try {
       const { id, name, emails, photos } = profile;
+
       if (!emails || emails.length === 0) {
-        return done(new UnauthorizedException('Email is required'), null);
+        return done(new UnauthorizedException('Email is required'), false);
       }
+
       const user = await this.validateOAuthUserUseCase.execute({
         provider: Provider.GOOGLE,
         providerId: id,
@@ -48,9 +50,10 @@ export class GoogleStrategy extends PassportStrategy(
         name: name.givenName + ' ' + name.familyName,
         photoUrl: photos?.[0]?.value,
       });
+
       done(null, user);
     } catch (error) {
-      done(error, null);
+      done(error, false);
     }
   }
 }
