@@ -1,13 +1,13 @@
 import { Body, Controller, Get, Post, UseGuards, Patch } from '@nestjs/common';
-import { RegisterDto } from '../dto/register.dto';
-import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { RegisterDto } from '../../application/dtos/register.dto';
+import { RefreshTokenDto } from '../../application/dtos/refresh-token.dto';
 import { Roles } from '../decorators/roles.decorator';
 import { RolesGuard } from '../guards/roles.guard';
 import { Role } from '@prisma/client';
 import { GetUser } from '../decorators/get-user.decorator';
 import { AuthUser } from '../../domain/interfaces/user.interface';
-import { UpdateProfileDto } from '../dto/update-profile.dto';
-import { ChangePasswordDto } from '../dto/change-password.dto';
+import { UpdateProfileDto } from '../../application/dtos/update-profile.dto';
+import { ChangePasswordDto } from '../../application/dtos/change-password.dto';
 import { LocalAuthGuard } from '../guards/local-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { GoogleAuthGuard } from '../guards/google-auth.guard';
