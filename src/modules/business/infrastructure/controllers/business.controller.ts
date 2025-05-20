@@ -10,7 +10,6 @@ import {
   HttpCode,
   NotFoundException,
   UseGuards,
-  ForbiddenException,
   ParseIntPipe,
   UseInterceptors,
   UploadedFile,
@@ -89,26 +88,11 @@ export class BusinessController {
     @Body() updateBusinessDto: UpdateBusinessDto,
     @GetUser() currentUser: AuthUser,
   ): Promise<Business> {
-    // If the user has the BUSINESS role, we verify that they are trying to update their own business
-    if (currentUser.role === Role.BUSINESS) {
-      // Retrieve the complete user with their relations from the database
-      const userWithRelations = await this.usersRepository.findById(
-        currentUser.id,
-      );
-
-      if (!userWithRelations) {
-        throw new NotFoundException('User not found');
-      }
-
-      // If the user does not have an associated business or is trying to edit another business
-      const userBusinessId = userWithRelations.businessId || 0;
-
-      if (!userBusinessId || userBusinessId !== id) {
-        throw new ForbiddenException('You can only update your own business');
-      }
-    }
-
-    return this.updateBusinessUseCase.execute(id, updateBusinessDto);
+    return this.updateBusinessUseCase.execute(
+      id,
+      updateBusinessDto,
+      currentUser,
+    );
   }
 
   @Post(':id/logo')
@@ -120,31 +104,11 @@ export class BusinessController {
     @UploadedFile() file: UploadedFileType,
     @GetUser() currentUser: AuthUser,
   ): Promise<BusinessResponseDto> {
-    // Check if user is trying to update their own business logo (if BUSINESS role)
-    if (currentUser.role === Role.BUSINESS) {
-      const userWithRelations = await this.usersRepository.findById(
-        currentUser.id,
-      );
-
-      if (!userWithRelations) {
-        throw new NotFoundException('User not found');
-      }
-
-      // If the user does not have an associated business or is trying to edit another business
-      const userBusinessId = userWithRelations.businessId || 0;
-
-      if (!userBusinessId || userBusinessId !== id) {
-        throw new ForbiddenException(
-          'You can only update the logo of your own business',
-        );
-      }
-    }
-
     if (!file) {
       throw new NotFoundException('No file uploaded');
     }
 
-    return this.uploadBusinessLogoUseCase.execute(id, file.buffer);
+    return this.uploadBusinessLogoUseCase.execute(id, file.buffer, currentUser);
   }
 
   @Post(':id/banner')
@@ -156,31 +120,15 @@ export class BusinessController {
     @UploadedFile() file: UploadedFileType,
     @GetUser() currentUser: AuthUser,
   ): Promise<BusinessResponseDto> {
-    // Check if user is trying to update their own business banner (if BUSINESS role)
-    if (currentUser.role === Role.BUSINESS) {
-      const userWithRelations = await this.usersRepository.findById(
-        currentUser.id,
-      );
-
-      if (!userWithRelations) {
-        throw new NotFoundException('User not found');
-      }
-
-      // If the user does not have an associated business or is trying to edit another business
-      const userBusinessId = userWithRelations.businessId || 0;
-
-      if (!userBusinessId || userBusinessId !== id) {
-        throw new ForbiddenException(
-          'You can only update the banner of your own business',
-        );
-      }
-    }
-
     if (!file) {
       throw new NotFoundException('No file uploaded');
     }
 
-    return this.uploadBusinessBannerUseCase.execute(id, file.buffer);
+    return this.uploadBusinessBannerUseCase.execute(
+      id,
+      file.buffer,
+      currentUser,
+    );
   }
 
   @Delete(':id')

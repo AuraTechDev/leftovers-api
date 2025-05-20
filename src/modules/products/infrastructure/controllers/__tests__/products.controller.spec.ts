@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { ProductsController } from '../products.controller';
+import { UploadedFileType } from '../../../../cloudinary/interfaces/file-upload.interface';
 
 // Import use cases
 import { CreateProductUseCase } from '../../../application/use-cases/create-product.use-case';
@@ -12,12 +13,6 @@ import { DeleteProductUseCase } from '../../../application/use-cases/delete-prod
 import { UploadProductImageUseCase } from '../../../application/use-cases/upload-product-image.use-case';
 import { ToggleProductPropertyUseCase } from '../../../application/use-cases/toggle-product-property.use-case';
 
-// Import food type use cases
-import { CreateFoodTypeUseCase } from '../../../application/use-cases/create-food-type.use-case';
-import { GetAllFoodTypesUseCase } from '../../../application/use-cases/get-all-food-types.use-case';
-import { UpdateFoodTypeUseCase } from '../../../application/use-cases/update-food-type.use-case';
-import { DeleteFoodTypeUseCase } from '../../../application/use-cases/delete-food-type.use-case';
-
 // Import repositories
 import { UsersRepository } from '../../../../users/infrastructure/repositories/users.repository';
 import { BusinessRepository } from '../../../../business/infrastructure/repositories/business.repository';
@@ -25,18 +20,14 @@ import { BusinessRepository } from '../../../../business/infrastructure/reposito
 // Import mocks
 import {
   createMockProductUseCases,
-  createMockFoodTypeUseCases,
   createMockRepositories,
   createMockRequestWithUser,
   createMockAuthUser,
   createMockProductsArray,
-  createMockFoodTypesArray,
   createMockUserWithBusiness,
   createMockUploadedFile,
-  UploadedFileType,
 } from '../../../__mocks__/products-controller.mock';
 import { createMockProductResponseDto } from '../../../__mocks__/product-use-cases.mock';
-import { createMockFoodTypeResponseDto } from '../../../__mocks__/food-type.mock';
 import { createMockCreateProductDto } from '../../../__mocks__/product-use-cases.mock';
 
 describe('ProductsController', () => {
@@ -44,7 +35,6 @@ describe('ProductsController', () => {
 
   // Mock use cases
   const mockProductUseCases = createMockProductUseCases();
-  const mockFoodTypeUseCases = createMockFoodTypeUseCases();
   const mockRepositories = createMockRepositories();
 
   beforeEach(async () => {
@@ -79,24 +69,6 @@ describe('ProductsController', () => {
         {
           provide: ToggleProductPropertyUseCase,
           useValue: mockProductUseCases.toggleProductPropertyUseCase,
-        },
-
-        // Food type use cases
-        {
-          provide: CreateFoodTypeUseCase,
-          useValue: mockFoodTypeUseCases.createFoodTypeUseCase,
-        },
-        {
-          provide: GetAllFoodTypesUseCase,
-          useValue: mockFoodTypeUseCases.getAllFoodTypesUseCase,
-        },
-        {
-          provide: UpdateFoodTypeUseCase,
-          useValue: mockFoodTypeUseCases.updateFoodTypeUseCase,
-        },
-        {
-          provide: DeleteFoodTypeUseCase,
-          useValue: mockFoodTypeUseCases.deleteFoodTypeUseCase,
         },
 
         // Repositories
@@ -261,33 +233,14 @@ describe('ProductsController', () => {
         ).toHaveBeenCalledWith(productId);
         expect(result).toEqual(mockProduct);
       });
-
-      it('should throw NotFoundException when product does not exist', async () => {
-        // Arrange
-        const productId = 999;
-        mockProductUseCases.getProductUseCase.execute.mockRejectedValue(
-          new NotFoundException(`Product with ID ${productId} not found`),
-        );
-
-        // Act & Assert
-        await expect(controller.getProductById(productId)).rejects.toThrow(
-          NotFoundException,
-        );
-        expect(
-          mockProductUseCases.getProductUseCase.execute,
-        ).toHaveBeenCalledWith(productId);
-      });
     });
 
     describe('updateProduct', () => {
       it('should update a product when user is SUPER_ADMIN', async () => {
         // Arrange
         const productId = 1;
+        const mockProduct = createMockProductResponseDto({ id: productId });
         const updateProductDto = { name: 'Updated Product' };
-        const mockProduct = createMockProductResponseDto({
-          id: productId,
-          name: 'Updated Product',
-        });
         const req = createMockRequestWithUser({
           user: createMockAuthUser({ role: Role.SUPER_ADMIN }),
         });
@@ -295,9 +248,10 @@ describe('ProductsController', () => {
         mockProductUseCases.getProductUseCase.execute.mockResolvedValue(
           mockProduct,
         );
-        mockProductUseCases.updateProductUseCase.execute.mockResolvedValue(
-          mockProduct,
-        );
+        mockProductUseCases.updateProductUseCase.execute.mockResolvedValue({
+          ...mockProduct,
+          ...updateProductDto,
+        });
 
         // Act
         const result = await controller.updateProduct(
@@ -313,18 +267,17 @@ describe('ProductsController', () => {
         expect(
           mockProductUseCases.updateProductUseCase.execute,
         ).toHaveBeenCalledWith(productId, updateProductDto);
-        expect(result).toEqual(mockProduct);
+        expect(result).toEqual({ ...mockProduct, ...updateProductDto });
       });
 
       it('should update a product when BUSINESS user owns the business', async () => {
         // Arrange
         const productId = 1;
-        const updateProductDto = { name: 'Updated Product' };
         const mockProduct = createMockProductResponseDto({
           id: productId,
-          name: 'Updated Product',
           businessId: 1,
         });
+        const updateProductDto = { name: 'Updated Product' };
         const req = createMockRequestWithUser({
           user: createMockAuthUser({ role: Role.BUSINESS, businessId: 1 }),
         });
@@ -336,9 +289,10 @@ describe('ProductsController', () => {
         mockRepositories.usersRepository.findById.mockResolvedValue(
           userWithBusiness,
         );
-        mockProductUseCases.updateProductUseCase.execute.mockResolvedValue(
-          mockProduct,
-        );
+        mockProductUseCases.updateProductUseCase.execute.mockResolvedValue({
+          ...mockProduct,
+          ...updateProductDto,
+        });
 
         // Act
         const result = await controller.updateProduct(
@@ -357,18 +311,17 @@ describe('ProductsController', () => {
         expect(
           mockProductUseCases.updateProductUseCase.execute,
         ).toHaveBeenCalledWith(productId, updateProductDto);
-        expect(result).toEqual(mockProduct);
+        expect(result).toEqual({ ...mockProduct, ...updateProductDto });
       });
 
       it('should throw ForbiddenException when BUSINESS user tries to update product from another business', async () => {
         // Arrange
         const productId = 1;
-        const updateProductDto = { name: 'Updated Product' };
         const mockProduct = createMockProductResponseDto({
           id: productId,
-          name: 'Updated Product',
-          businessId: 2, // Different business
+          businessId: 2,
         });
+        const updateProductDto = { name: 'Updated Product' };
         const req = createMockRequestWithUser({
           user: createMockAuthUser({ role: Role.BUSINESS, businessId: 1 }),
         });
@@ -467,7 +420,7 @@ describe('ProductsController', () => {
         const productId = 1;
         const mockProduct = createMockProductResponseDto({
           id: productId,
-          businessId: 2, // Different business
+          businessId: 2,
         });
         const req = createMockRequestWithUser({
           user: createMockAuthUser({ role: Role.BUSINESS, businessId: 1 }),
@@ -498,14 +451,11 @@ describe('ProductsController', () => {
     });
 
     describe('uploadProductImage', () => {
-      it('should upload product image when user is SUPER_ADMIN', async () => {
+      it('should upload a product image when user is SUPER_ADMIN', async () => {
         // Arrange
         const productId = 1;
-        const file = createMockUploadedFile();
-        const mockProduct = createMockProductResponseDto({
-          id: productId,
-          imageUrl: 'https://example.com/image.jpg',
-        });
+        const mockProduct = createMockProductResponseDto({ id: productId });
+        const mockFile = createMockUploadedFile();
         const req = createMockRequestWithUser({
           user: createMockAuthUser({ role: Role.SUPER_ADMIN }),
         });
@@ -514,13 +464,16 @@ describe('ProductsController', () => {
           mockProduct,
         );
         mockProductUseCases.uploadProductImageUseCase.execute.mockResolvedValue(
-          mockProduct,
+          {
+            ...mockProduct,
+            imageUrl: 'https://example.com/image.jpg',
+          },
         );
 
         // Act
         const result = await controller.uploadProductImage(
           productId,
-          file,
+          mockFile,
           req.user,
         );
 
@@ -530,19 +483,21 @@ describe('ProductsController', () => {
         ).toHaveBeenCalledWith(productId);
         expect(
           mockProductUseCases.uploadProductImageUseCase.execute,
-        ).toHaveBeenCalledWith(productId, file.buffer);
-        expect(result).toEqual(mockProduct);
+        ).toHaveBeenCalledWith(productId, mockFile.buffer);
+        expect(result).toEqual({
+          ...mockProduct,
+          imageUrl: 'https://example.com/image.jpg',
+        });
       });
 
-      it('should upload product image when BUSINESS user owns the business', async () => {
+      it('should upload a product image when BUSINESS user owns the business', async () => {
         // Arrange
         const productId = 1;
-        const file = createMockUploadedFile();
         const mockProduct = createMockProductResponseDto({
           id: productId,
           businessId: 1,
-          imageUrl: 'https://example.com/image.jpg',
         });
+        const mockFile = createMockUploadedFile();
         const req = createMockRequestWithUser({
           user: createMockAuthUser({ role: Role.BUSINESS, businessId: 1 }),
         });
@@ -555,13 +510,16 @@ describe('ProductsController', () => {
           userWithBusiness,
         );
         mockProductUseCases.uploadProductImageUseCase.execute.mockResolvedValue(
-          mockProduct,
+          {
+            ...mockProduct,
+            imageUrl: 'https://example.com/image.jpg',
+          },
         );
 
         // Act
         const result = await controller.uploadProductImage(
           productId,
-          file,
+          mockFile,
           req.user,
         );
 
@@ -574,14 +532,51 @@ describe('ProductsController', () => {
         );
         expect(
           mockProductUseCases.uploadProductImageUseCase.execute,
-        ).toHaveBeenCalledWith(productId, file.buffer);
-        expect(result).toEqual(mockProduct);
+        ).toHaveBeenCalledWith(productId, mockFile.buffer);
+        expect(result).toEqual({
+          ...mockProduct,
+          imageUrl: 'https://example.com/image.jpg',
+        });
+      });
+
+      it('should throw ForbiddenException when BUSINESS user tries to upload image for product from another business', async () => {
+        // Arrange
+        const productId = 1;
+        const mockProduct = createMockProductResponseDto({
+          id: productId,
+          businessId: 2,
+        });
+        const mockFile = createMockUploadedFile();
+        const req = createMockRequestWithUser({
+          user: createMockAuthUser({ role: Role.BUSINESS, businessId: 1 }),
+        });
+        const userWithBusiness = createMockUserWithBusiness();
+
+        mockProductUseCases.getProductUseCase.execute.mockResolvedValue(
+          mockProduct,
+        );
+        mockRepositories.usersRepository.findById.mockResolvedValue(
+          userWithBusiness,
+        );
+
+        // Act & Assert
+        await expect(
+          controller.uploadProductImage(productId, mockFile, req.user),
+        ).rejects.toThrow(ForbiddenException);
+        expect(
+          mockProductUseCases.getProductUseCase.execute,
+        ).toHaveBeenCalledWith(productId);
+        expect(mockRepositories.usersRepository.findById).toHaveBeenCalledWith(
+          1,
+        );
+        expect(
+          mockProductUseCases.uploadProductImageUseCase.execute,
+        ).not.toHaveBeenCalled();
       });
 
       it('should throw NotFoundException when no file is uploaded', async () => {
         // Arrange
         const productId = 1;
-        const file = null as unknown as UploadedFileType;
         const mockProduct = createMockProductResponseDto({ id: productId });
         const req = createMockRequestWithUser({
           user: createMockAuthUser({ role: Role.SUPER_ADMIN }),
@@ -592,8 +587,9 @@ describe('ProductsController', () => {
         );
 
         // Act & Assert
+        const undefinedFile = undefined as unknown as UploadedFileType;
         await expect(
-          controller.uploadProductImage(productId, file, req.user),
+          controller.uploadProductImage(productId, undefinedFile, req.user),
         ).rejects.toThrow(NotFoundException);
         expect(
           mockProductUseCases.getProductUseCase.execute,
@@ -608,10 +604,7 @@ describe('ProductsController', () => {
       it('should toggle product feature when user is SUPER_ADMIN', async () => {
         // Arrange
         const productId = 1;
-        const mockProduct = createMockProductResponseDto({
-          id: productId,
-          isFeatured: true,
-        });
+        const mockProduct = createMockProductResponseDto({ id: productId });
         const req = createMockRequestWithUser({
           user: createMockAuthUser({ role: Role.SUPER_ADMIN }),
         });
@@ -620,7 +613,10 @@ describe('ProductsController', () => {
           mockProduct,
         );
         mockProductUseCases.toggleProductPropertyUseCase.execute.mockResolvedValue(
-          mockProduct,
+          {
+            ...mockProduct,
+            isFeatured: true,
+          },
         );
 
         // Act
@@ -636,18 +632,93 @@ describe('ProductsController', () => {
         expect(
           mockProductUseCases.toggleProductPropertyUseCase.execute,
         ).toHaveBeenCalledWith(productId, 'isFeatured');
-        expect(result).toEqual(mockProduct);
+        expect(result).toEqual({ ...mockProduct, isFeatured: true });
       });
-    });
 
-    describe('toggleProductDisable', () => {
-      it('should toggle product disable status when user is SUPER_ADMIN', async () => {
+      it('should toggle product feature when BUSINESS user owns the business', async () => {
         // Arrange
         const productId = 1;
         const mockProduct = createMockProductResponseDto({
           id: productId,
-          isDisabled: true,
+          businessId: 1,
         });
+        const req = createMockRequestWithUser({
+          user: createMockAuthUser({ role: Role.BUSINESS, businessId: 1 }),
+        });
+        const userWithBusiness = createMockUserWithBusiness();
+
+        mockProductUseCases.getProductUseCase.execute.mockResolvedValue(
+          mockProduct,
+        );
+        mockRepositories.usersRepository.findById.mockResolvedValue(
+          userWithBusiness,
+        );
+        mockProductUseCases.toggleProductPropertyUseCase.execute.mockResolvedValue(
+          {
+            ...mockProduct,
+            isFeatured: true,
+          },
+        );
+
+        // Act
+        const result = await controller.toggleProductFeature(
+          productId,
+          req.user,
+        );
+
+        // Assert
+        expect(
+          mockProductUseCases.getProductUseCase.execute,
+        ).toHaveBeenCalledWith(productId);
+        expect(mockRepositories.usersRepository.findById).toHaveBeenCalledWith(
+          1,
+        );
+        expect(
+          mockProductUseCases.toggleProductPropertyUseCase.execute,
+        ).toHaveBeenCalledWith(productId, 'isFeatured');
+        expect(result).toEqual({ ...mockProduct, isFeatured: true });
+      });
+
+      it('should throw ForbiddenException when BUSINESS user tries to toggle feature for product from another business', async () => {
+        // Arrange
+        const productId = 1;
+        const mockProduct = createMockProductResponseDto({
+          id: productId,
+          businessId: 2,
+        });
+        const req = createMockRequestWithUser({
+          user: createMockAuthUser({ role: Role.BUSINESS, businessId: 1 }),
+        });
+        const userWithBusiness = createMockUserWithBusiness();
+
+        mockProductUseCases.getProductUseCase.execute.mockResolvedValue(
+          mockProduct,
+        );
+        mockRepositories.usersRepository.findById.mockResolvedValue(
+          userWithBusiness,
+        );
+
+        // Act & Assert
+        await expect(
+          controller.toggleProductFeature(productId, req.user),
+        ).rejects.toThrow(ForbiddenException);
+        expect(
+          mockProductUseCases.getProductUseCase.execute,
+        ).toHaveBeenCalledWith(productId);
+        expect(mockRepositories.usersRepository.findById).toHaveBeenCalledWith(
+          1,
+        );
+        expect(
+          mockProductUseCases.toggleProductPropertyUseCase.execute,
+        ).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('toggleProductDisable', () => {
+      it('should toggle product disable when user is SUPER_ADMIN', async () => {
+        // Arrange
+        const productId = 1;
+        const mockProduct = createMockProductResponseDto({ id: productId });
         const req = createMockRequestWithUser({
           user: createMockAuthUser({ role: Role.SUPER_ADMIN }),
         });
@@ -656,7 +727,10 @@ describe('ProductsController', () => {
           mockProduct,
         );
         mockProductUseCases.toggleProductPropertyUseCase.execute.mockResolvedValue(
-          mockProduct,
+          {
+            ...mockProduct,
+            isDisabled: true,
+          },
         );
 
         // Act
@@ -672,95 +746,85 @@ describe('ProductsController', () => {
         expect(
           mockProductUseCases.toggleProductPropertyUseCase.execute,
         ).toHaveBeenCalledWith(productId, 'isDisabled');
-        expect(result).toEqual(mockProduct);
+        expect(result).toEqual({ ...mockProduct, isDisabled: true });
       });
-    });
-  });
 
-  describe('Food Type Endpoints', () => {
-    describe('createFoodType', () => {
-      it('should create a food type as SUPER_ADMIN', async () => {
+      it('should toggle product disable when BUSINESS user owns the business', async () => {
         // Arrange
-        const createFoodTypeDto = { name: 'Vegetarian' };
-        const mockFoodType = createMockFoodTypeResponseDto();
-
-        mockFoodTypeUseCases.createFoodTypeUseCase.execute.mockResolvedValue(
-          mockFoodType,
-        );
-
-        // Act
-        const result = await controller.createFoodType(createFoodTypeDto);
-
-        // Assert
-        expect(
-          mockFoodTypeUseCases.createFoodTypeUseCase.execute,
-        ).toHaveBeenCalledWith(createFoodTypeDto);
-        expect(result).toEqual(mockFoodType);
-      });
-    });
-
-    describe('getAllFoodTypes', () => {
-      it('should return all food types', async () => {
-        // Arrange
-        const mockFoodTypes = createMockFoodTypesArray();
-        mockFoodTypeUseCases.getAllFoodTypesUseCase.execute.mockResolvedValue(
-          mockFoodTypes,
-        );
-
-        // Act
-        const result = await controller.getAllFoodTypes();
-
-        // Assert
-        expect(
-          mockFoodTypeUseCases.getAllFoodTypesUseCase.execute,
-        ).toHaveBeenCalled();
-        expect(result).toEqual(mockFoodTypes);
-      });
-    });
-
-    describe('updateFoodType', () => {
-      it('should update a food type', async () => {
-        // Arrange
-        const foodTypeId = 1;
-        const updateFoodTypeDto = { name: 'Updated Food Type' };
-        const mockFoodType = createMockFoodTypeResponseDto({
-          id: foodTypeId,
-          name: 'Updated Food Type',
+        const productId = 1;
+        const mockProduct = createMockProductResponseDto({
+          id: productId,
+          businessId: 1,
         });
+        const req = createMockRequestWithUser({
+          user: createMockAuthUser({ role: Role.BUSINESS, businessId: 1 }),
+        });
+        const userWithBusiness = createMockUserWithBusiness();
 
-        mockFoodTypeUseCases.updateFoodTypeUseCase.execute.mockResolvedValue(
-          mockFoodType,
+        mockProductUseCases.getProductUseCase.execute.mockResolvedValue(
+          mockProduct,
+        );
+        mockRepositories.usersRepository.findById.mockResolvedValue(
+          userWithBusiness,
+        );
+        mockProductUseCases.toggleProductPropertyUseCase.execute.mockResolvedValue(
+          {
+            ...mockProduct,
+            isDisabled: true,
+          },
         );
 
         // Act
-        const result = await controller.updateFoodType(
-          foodTypeId,
-          updateFoodTypeDto,
+        const result = await controller.toggleProductDisable(
+          productId,
+          req.user,
         );
 
         // Assert
         expect(
-          mockFoodTypeUseCases.updateFoodTypeUseCase.execute,
-        ).toHaveBeenCalledWith(foodTypeId, updateFoodTypeDto);
-        expect(result).toEqual(mockFoodType);
+          mockProductUseCases.getProductUseCase.execute,
+        ).toHaveBeenCalledWith(productId);
+        expect(mockRepositories.usersRepository.findById).toHaveBeenCalledWith(
+          1,
+        );
+        expect(
+          mockProductUseCases.toggleProductPropertyUseCase.execute,
+        ).toHaveBeenCalledWith(productId, 'isDisabled');
+        expect(result).toEqual({ ...mockProduct, isDisabled: true });
       });
-    });
 
-    describe('deleteFoodType', () => {
-      it('should delete a food type', async () => {
+      it('should throw ForbiddenException when BUSINESS user tries to toggle disable for product from another business', async () => {
         // Arrange
-        const foodTypeId = 1;
-        mockFoodTypeUseCases.deleteFoodTypeUseCase.execute.mockResolvedValue(
-          undefined,
+        const productId = 1;
+        const mockProduct = createMockProductResponseDto({
+          id: productId,
+          businessId: 2,
+        });
+        const req = createMockRequestWithUser({
+          user: createMockAuthUser({ role: Role.BUSINESS, businessId: 1 }),
+        });
+        const userWithBusiness = createMockUserWithBusiness();
+
+        mockProductUseCases.getProductUseCase.execute.mockResolvedValue(
+          mockProduct,
+        );
+        mockRepositories.usersRepository.findById.mockResolvedValue(
+          userWithBusiness,
         );
 
-        // Act
-        await controller.deleteFoodType(foodTypeId);
-
-        // Assert
+        // Act & Assert
+        await expect(
+          controller.toggleProductDisable(productId, req.user),
+        ).rejects.toThrow(ForbiddenException);
         expect(
-          mockFoodTypeUseCases.deleteFoodTypeUseCase.execute,
-        ).toHaveBeenCalledWith(foodTypeId);
+          mockProductUseCases.getProductUseCase.execute,
+        ).toHaveBeenCalledWith(productId);
+        expect(mockRepositories.usersRepository.findById).toHaveBeenCalledWith(
+          1,
+        );
+        expect(
+          mockProductUseCases.toggleProductPropertyUseCase.execute,
+        ).not.toHaveBeenCalled();
       });
     });
   });
