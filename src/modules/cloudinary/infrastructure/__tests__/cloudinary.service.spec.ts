@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CloudinaryService } from '../cloudinary.service';
+import { CloudinaryService } from '../services/cloudinary.service';
 
 // Mock cloudinary before import
 jest.mock('cloudinary', () => ({
