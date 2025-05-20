@@ -11,6 +11,7 @@ import { UsersModule } from '../users/users.module';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { UploadBusinessLogoUseCase } from './application/use-cases/upload-business-logo.use-case';
 import { UploadBusinessBannerUseCase } from './application/use-cases/upload-business-banner.use-case';
+import { BusinessAuthorizationService } from './application/services/business-authorization.service';
 
 @Module({
   imports: [PrismaModule, UsersModule, CloudinaryModule],
@@ -24,6 +25,7 @@ import { UploadBusinessBannerUseCase } from './application/use-cases/upload-busi
     GetAllBusinessesUseCase,
     UploadBusinessLogoUseCase,
     UploadBusinessBannerUseCase,
+    BusinessAuthorizationService,
   ],
   exports: [BusinessRepository],
 })
