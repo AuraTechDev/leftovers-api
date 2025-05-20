@@ -8,9 +8,9 @@ import { GetAllBusinessesUseCase } from '../../../application/use-cases/get-all-
 import { GetBusinessUseCase } from '../../../application/use-cases/get-business.use-case';
 import { UpdateBusinessUseCase } from '../../../application/use-cases/update-business.use-case';
 import { DeleteBusinessUseCase } from '../../../application/use-cases/delete-business.use-case';
-import { UsersRepository } from '../../../../users/infrastructure/repositories/users.repository';
 import { UploadBusinessLogoUseCase } from '../../../application/use-cases/upload-business-logo.use-case';
 import { UploadBusinessBannerUseCase } from '../../../application/use-cases/upload-business-banner.use-case';
+import { UsersRepository } from '../../../../users/infrastructure/repositories/users.repository';
 import {
   RequestWithUser,
   UploadedFileType,
@@ -21,8 +21,6 @@ import {
   mockBusinessUser,
   mockFile,
   mockSuperAdmin,
-  mockUserWithBusiness,
-  mockUserWithoutBusiness,
 } from '../../../__mocks__/business.mocks';
 import { Business } from '../../../domain/entities/business.entity';
 
@@ -35,7 +33,6 @@ describe('BusinessController', () => {
   let deleteBusinessUseCase: DeleteBusinessUseCase;
   let uploadBusinessLogoUseCase: UploadBusinessLogoUseCase;
   let uploadBusinessBannerUseCase: UploadBusinessBannerUseCase;
-  let usersRepository: UsersRepository;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -112,7 +109,6 @@ describe('BusinessController', () => {
     uploadBusinessBannerUseCase = module.get<UploadBusinessBannerUseCase>(
       UploadBusinessBannerUseCase,
     );
-    usersRepository = module.get<UsersRepository>(UsersRepository);
   });
 
   it('should be defined', () => {
@@ -174,105 +170,96 @@ describe('BusinessController', () => {
   });
 
   describe('updateBusiness', () => {
-    const updateBusinessDto: UpdateBusinessDto = {
-      name: 'Updated Business',
-      description: 'Updated Description',
-    };
-
     it('should allow SUPER_ADMIN to update any business', async () => {
-      const req = { user: mockSuperAdmin } as unknown as RequestWithUser;
-
+      // Arrange
+      const updateBusinessDto: UpdateBusinessDto = {
+        name: 'Updated Business',
+      };
+      const req = { user: mockSuperAdmin } as RequestWithUser;
       const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
-      executeSpy.mockResolvedValue({
-        ...mockBusiness,
-        name: updateBusinessDto.name!,
-        description: updateBusinessDto.description!,
-      });
+      executeSpy.mockResolvedValue(mockBusinessResponse);
 
+      // Act
       const result = await controller.updateBusiness(
         1,
         updateBusinessDto,
         req.user,
       );
 
-      expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto);
-      expect(result.name).toEqual(updateBusinessDto.name);
-      expect(result.description).toEqual(updateBusinessDto.description);
+      // Assert
+      expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto, req.user);
+      expect(result).toEqual(mockBusinessResponse);
     });
 
     it('should allow BUSINESS user to update their own business', async () => {
-      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
-
-      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
-      findByIdSpy.mockResolvedValue(mockUserWithBusiness);
-
+      // Arrange
+      const updateBusinessDto: UpdateBusinessDto = {
+        name: 'Updated Business',
+      };
+      const req = { user: mockBusinessUser } as RequestWithUser;
       const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
-      executeSpy.mockResolvedValue({
-        ...mockBusiness,
-        name: updateBusinessDto.name!,
-        description: updateBusinessDto.description!,
-      });
+      executeSpy.mockResolvedValue(mockBusinessResponse);
 
+      // Act
       const result = await controller.updateBusiness(
         1,
         updateBusinessDto,
         req.user,
       );
 
-      expect(findByIdSpy).toHaveBeenCalledWith(2);
-      expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto);
-      expect(result.name).toEqual(updateBusinessDto.name);
-      expect(result.description).toEqual(updateBusinessDto.description);
+      // Assert
+      expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto, req.user);
+      expect(result).toEqual(mockBusinessResponse);
     });
 
     it('should prevent BUSINESS user from updating other businesses', async () => {
-      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
-
-      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
-      findByIdSpy.mockResolvedValue(mockUserWithBusiness);
-
+      // Arrange
+      const updateBusinessDto: UpdateBusinessDto = {
+        name: 'Updated Business',
+      };
+      const req = { user: mockBusinessUser } as RequestWithUser;
       const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
+      executeSpy.mockRejectedValue(new ForbiddenException('Access denied'));
 
+      // Act & Assert
       await expect(
         controller.updateBusiness(999, updateBusinessDto, req.user),
       ).rejects.toThrow(ForbiddenException);
-
-      expect(findByIdSpy).toHaveBeenCalledWith(2);
-      expect(executeSpy).not.toHaveBeenCalled();
+      expect(executeSpy).toHaveBeenCalledWith(999, updateBusinessDto, req.user);
     });
 
     it('should prevent BUSINESS user without a business from updating any business', async () => {
+      // Arrange
+      const updateBusinessDto: UpdateBusinessDto = {
+        name: 'Updated Business',
+      };
       const req = {
-        user: { ...mockBusinessUser, businessId: undefined },
+        user: { ...mockBusinessUser, businessId: null },
       } as unknown as RequestWithUser;
-
-      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
-      findByIdSpy.mockResolvedValue(mockUserWithoutBusiness);
-
       const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
+      executeSpy.mockRejectedValue(new ForbiddenException('Access denied'));
 
+      // Act & Assert
       await expect(
         controller.updateBusiness(1, updateBusinessDto, req.user),
       ).rejects.toThrow(ForbiddenException);
-
-      expect(findByIdSpy).toHaveBeenCalledWith(2);
-      expect(executeSpy).not.toHaveBeenCalled();
+      expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto, req.user);
     });
 
     it('should handle user not found', async () => {
-      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
-
-      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
-      findByIdSpy.mockResolvedValue(null);
-
+      // Arrange
+      const updateBusinessDto: UpdateBusinessDto = {
+        name: 'Updated Business',
+      };
+      const req = { user: mockBusinessUser } as RequestWithUser;
       const executeSpy = jest.spyOn(updateBusinessUseCase, 'execute');
+      executeSpy.mockRejectedValue(new NotFoundException('User not found'));
 
+      // Act & Assert
       await expect(
         controller.updateBusiness(1, updateBusinessDto, req.user),
       ).rejects.toThrow(NotFoundException);
-
-      expect(findByIdSpy).toHaveBeenCalledWith(2);
-      expect(executeSpy).not.toHaveBeenCalled();
+      expect(executeSpy).toHaveBeenCalledWith(1, updateBusinessDto, req.user);
     });
   });
 
@@ -290,7 +277,7 @@ describe('BusinessController', () => {
   describe('uploadLogo', () => {
     it('should upload a logo as a SUPER_ADMIN', async () => {
       // Arrange
-      const req = { user: mockSuperAdmin } as unknown as RequestWithUser;
+      const req = { user: mockSuperAdmin } as RequestWithUser;
       const executeSpy = jest.spyOn(uploadBusinessLogoUseCase, 'execute');
       executeSpy.mockResolvedValue(mockBusinessResponse);
 
@@ -302,17 +289,14 @@ describe('BusinessController', () => {
       );
 
       // Assert
-      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer);
+      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer, req.user);
       expect(result).toEqual(mockBusinessResponse);
     });
 
     it('should upload a logo as a BUSINESS user for their own business', async () => {
       // Arrange
-      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
-      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      const req = { user: mockBusinessUser } as RequestWithUser;
       const executeSpy = jest.spyOn(uploadBusinessLogoUseCase, 'execute');
-
-      findByIdSpy.mockResolvedValue(mockUserWithBusiness);
       executeSpy.mockResolvedValue(mockBusinessResponse);
 
       // Act
@@ -323,41 +307,34 @@ describe('BusinessController', () => {
       );
 
       // Assert
-      expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
-      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer);
+      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer, req.user);
       expect(result).toEqual(mockBusinessResponse);
     });
 
     it('should throw ForbiddenException when BUSINESS user tries to upload for another business', async () => {
       // Arrange
-      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
-      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      const req = { user: mockBusinessUser } as RequestWithUser;
       const executeSpy = jest.spyOn(uploadBusinessLogoUseCase, 'execute');
-
-      findByIdSpy.mockResolvedValue(mockUserWithBusiness);
+      executeSpy.mockRejectedValue(new ForbiddenException('Access denied'));
 
       // Act & Assert
       await expect(
         controller.uploadLogo(2, mockFile as UploadedFileType, req.user),
       ).rejects.toThrow(ForbiddenException);
-      expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
-      expect(executeSpy).not.toHaveBeenCalled();
+      expect(executeSpy).toHaveBeenCalledWith(2, mockFile.buffer, req.user);
     });
 
-    it('should throw NotFoundException when user is not found', async () => {
+    it('should handle user not found', async () => {
       // Arrange
-      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
-      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      const req = { user: mockBusinessUser } as RequestWithUser;
       const executeSpy = jest.spyOn(uploadBusinessLogoUseCase, 'execute');
-
-      findByIdSpy.mockResolvedValue(null);
+      executeSpy.mockRejectedValue(new NotFoundException('User not found'));
 
       // Act & Assert
       await expect(
         controller.uploadLogo(1, mockFile as UploadedFileType, req.user),
       ).rejects.toThrow(NotFoundException);
-      expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
-      expect(executeSpy).not.toHaveBeenCalled();
+      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer, req.user);
     });
 
     it('should throw NotFoundException when no file is uploaded', async () => {
@@ -376,7 +353,7 @@ describe('BusinessController', () => {
   describe('uploadBanner', () => {
     it('should upload a banner as a SUPER_ADMIN', async () => {
       // Arrange
-      const req = { user: mockSuperAdmin } as unknown as RequestWithUser;
+      const req = { user: mockSuperAdmin } as RequestWithUser;
       const executeSpy = jest.spyOn(uploadBusinessBannerUseCase, 'execute');
       executeSpy.mockResolvedValue(mockBusinessResponse);
 
@@ -388,17 +365,14 @@ describe('BusinessController', () => {
       );
 
       // Assert
-      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer);
+      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer, req.user);
       expect(result).toEqual(mockBusinessResponse);
     });
 
     it('should upload a banner as a BUSINESS user for their own business', async () => {
       // Arrange
-      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
-      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      const req = { user: mockBusinessUser } as RequestWithUser;
       const executeSpy = jest.spyOn(uploadBusinessBannerUseCase, 'execute');
-
-      findByIdSpy.mockResolvedValue(mockUserWithBusiness);
       executeSpy.mockResolvedValue(mockBusinessResponse);
 
       // Act
@@ -409,41 +383,34 @@ describe('BusinessController', () => {
       );
 
       // Assert
-      expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
-      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer);
+      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer, req.user);
       expect(result).toEqual(mockBusinessResponse);
     });
 
     it('should throw ForbiddenException when BUSINESS user tries to upload banner for another business', async () => {
       // Arrange
-      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
-      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      const req = { user: mockBusinessUser } as RequestWithUser;
       const executeSpy = jest.spyOn(uploadBusinessBannerUseCase, 'execute');
-
-      findByIdSpy.mockResolvedValue(mockUserWithBusiness);
+      executeSpy.mockRejectedValue(new ForbiddenException('Access denied'));
 
       // Act & Assert
       await expect(
         controller.uploadBanner(2, mockFile as UploadedFileType, req.user),
       ).rejects.toThrow(ForbiddenException);
-      expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
-      expect(executeSpy).not.toHaveBeenCalled();
+      expect(executeSpy).toHaveBeenCalledWith(2, mockFile.buffer, req.user);
     });
 
-    it('should throw NotFoundException when user is not found', async () => {
+    it('should handle user not found', async () => {
       // Arrange
-      const req = { user: mockBusinessUser } as unknown as RequestWithUser;
-      const findByIdSpy = jest.spyOn(usersRepository, 'findById');
+      const req = { user: mockBusinessUser } as RequestWithUser;
       const executeSpy = jest.spyOn(uploadBusinessBannerUseCase, 'execute');
-
-      findByIdSpy.mockResolvedValue(null);
+      executeSpy.mockRejectedValue(new NotFoundException('User not found'));
 
       // Act & Assert
       await expect(
         controller.uploadBanner(1, mockFile as UploadedFileType, req.user),
       ).rejects.toThrow(NotFoundException);
-      expect(findByIdSpy).toHaveBeenCalledWith(mockBusinessUser.id);
-      expect(executeSpy).not.toHaveBeenCalled();
+      expect(executeSpy).toHaveBeenCalledWith(1, mockFile.buffer, req.user);
     });
 
     it('should throw NotFoundException when no file is uploaded', async () => {
