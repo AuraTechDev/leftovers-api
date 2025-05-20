@@ -50,7 +50,7 @@ describe('RatingsController', () => {
   describe('submitRating', () => {
     it('should submit a rating successfully', async () => {
       // Arrange
-      const userId = 123;
+      const userId = 2;
       const createRatingDto: CreateRatingDto = {
         productId: 456,
         rating: 4,
@@ -79,7 +79,7 @@ describe('RatingsController', () => {
 
     it('should throw BadRequestException when user has already submitted a rating', async () => {
       // Arrange
-      const userId = 123;
+      const userId = 2;
       const createRatingDto: CreateRatingDto = {
         productId: 456,
         rating: 4,
@@ -103,7 +103,7 @@ describe('RatingsController', () => {
 
     it('should throw UnauthorizedException when user has not purchased the product', async () => {
       // Arrange
-      const userId = 123;
+      const userId = 2;
       const createRatingDto: CreateRatingDto = {
         productId: 456,
         rating: 4,
@@ -129,7 +129,7 @@ describe('RatingsController', () => {
   describe('getBusinessRatings', () => {
     it('should return business ratings successfully', async () => {
       // Arrange
-      const userId = 123;
+      const userId = 2;
       const businessId = 789;
       const query: BusinessRatingsQueryDto = {
         productId: 456,
@@ -157,7 +157,7 @@ describe('RatingsController', () => {
 
     it('should return empty array when no ratings are found', async () => {
       // Arrange
-      const userId = 123;
+      const userId = 2;
       const businessId = 789;
       const query: BusinessRatingsQueryDto = {
         productId: 999, // non-existent product
