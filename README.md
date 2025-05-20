@@ -114,3 +114,57 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contact
 
 For any questions or suggestions, please open an issue in the repository or contact the maintainers.
+
+# Environment Variables Setup
+
+To run this project locally, you need to create a `.env` file in the root directory with the following variables:
+
+## Core
+```
+NODE_ENV=development
+PORT=3000
+DATABASE_URL=postgresql://user:password@localhost:5432/yourdb
+```
+
+## JWT Auth
+```
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=1d
+```
+
+## Google OAuth
+```
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
+GOOGLE_SCOPE=email,profile
+```
+
+## Apple OAuth
+```
+APPLE_CLIENT_ID=your-apple-client-id
+APPLE_CLIENT_SECRET=your-apple-client-secret
+APPLE_CALLBACK_URL=http://localhost:3000/auth/apple/callback
+APPLE_KEY_ID=your-apple-key-id
+APPLE_PRIVATE_KEY_LOCATION=path/to/key
+APPLE_SCOPE=name,email
+```
+
+## Cloudinary (for file uploads)
+```
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+```
+
+---
+
+**Note:**
+- Replace all placeholder values with your actual credentials.
+- For OAuth, you may need to register your app with Google and Apple to obtain the client IDs and secrets.
+- The `GOOGLE_SCOPE` and `APPLE_SCOPE` can be a comma-separated list of scopes required by your app.
+- The `DATABASE_URL` should point to your local or development database instance.
+
+---
+
+For more details on each variable, see the `src/config/env.config.ts` file.
