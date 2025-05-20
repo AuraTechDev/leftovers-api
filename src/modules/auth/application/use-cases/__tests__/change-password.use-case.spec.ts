@@ -2,10 +2,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChangePasswordUseCase } from '../change-password.use-case';
 import { AuthRepository } from '../../../infrastructure/repositories/auth.repository';
-import { Provider, Role, User } from '@prisma/client';
+import { Provider, Role } from '@prisma/client';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { ChangePasswordDto } from '../../../infrastructure/dto/change-password.dto';
+import { ChangePasswordDto } from '../../dtos/change-password.dto';
 import * as bcrypt from 'bcryptjs';
+import { User } from '../../../../users/domain/entities/user.entity';
 
 jest.mock('bcryptjs', () => ({
   compare: jest.fn(),
@@ -61,9 +62,9 @@ describe('ChangePasswordUseCase', () => {
         password: 'hashed-current-password',
         role: Role.USER,
         provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
+        providerId: undefined,
+        photoUrl: undefined,
+        businessId: undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -125,12 +126,12 @@ describe('ChangePasswordUseCase', () => {
         id: userId,
         name: 'OAuth User',
         email: 'oauth@example.com',
-        password: null,
+        password: undefined,
         role: Role.USER,
         provider: Provider.GOOGLE,
         providerId: 'google-id',
         photoUrl: 'https://photo.url',
-        businessId: null,
+        businessId: undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -162,9 +163,9 @@ describe('ChangePasswordUseCase', () => {
         password: 'hashed-current-password',
         role: Role.USER,
         provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
+        providerId: undefined,
+        photoUrl: undefined,
+        businessId: undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

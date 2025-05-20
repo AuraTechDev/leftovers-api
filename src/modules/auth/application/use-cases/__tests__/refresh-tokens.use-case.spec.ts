@@ -3,8 +3,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshTokensUseCase } from '../refresh-tokens.use-case';
 import { AuthRepository } from '../../../infrastructure/repositories/auth.repository';
-import { Provider, Role, User } from '@prisma/client';
+import { Provider, Role } from '@prisma/client';
 import { UnauthorizedException } from '@nestjs/common';
+import { User } from '../../../../users/domain/entities/user.entity';
+import {
+  mockValidRefreshToken,
+  mockExpiredRefreshToken,
+} from '../../../__mocks__/auth.mocks';
 
 describe('RefreshTokensUseCase', () => {
   let useCase: RefreshTokensUseCase;
@@ -56,19 +61,14 @@ describe('RefreshTokensUseCase', () => {
         password: 'hashed-password',
         role: Role.USER,
         provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
+        providerId: undefined,
+        photoUrl: undefined,
+        businessId: undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      const tokenData = {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Un día en el futuro
-        user,
-      };
+      const tokenData = mockValidRefreshToken;
 
       authRepository.findRefreshToken.mockResolvedValue(tokenData);
       authRepository.deleteRefreshToken.mockResolvedValue(undefined);
@@ -121,26 +121,7 @@ describe('RefreshTokensUseCase', () => {
     it('should throw UnauthorizedException if token expired', async () => {
       // Arrange
       const refreshToken = 'expired-refresh-token';
-      const user: User = {
-        id: 1,
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'hashed-password',
-        role: Role.USER,
-        provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const tokenData = {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // Un día en el pasado
-        user,
-      };
+      const tokenData = mockExpiredRefreshToken;
 
       authRepository.findRefreshToken.mockResolvedValue(tokenData);
 

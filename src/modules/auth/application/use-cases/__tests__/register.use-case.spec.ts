@@ -3,9 +3,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterUseCase } from '../register.use-case';
 import { AuthRepository } from '../../../infrastructure/repositories/auth.repository';
-import { RegisterDto } from '../../../infrastructure/dto/register.dto';
-import { Provider, Role, User } from '@prisma/client';
+import { RegisterDto } from '../../dtos/register.dto';
 import { ConflictException } from '@nestjs/common';
+import { User } from '../../../../users/domain/entities/user.entity';
+import {
+  mockRegisterDto,
+  mockCreatedUser,
+  mockExistingUser,
+} from '../../../__mocks__/auth.mocks';
 
 describe('RegisterUseCase', () => {
   let useCase: RegisterUseCase;
@@ -49,25 +54,8 @@ describe('RegisterUseCase', () => {
   describe('execute', () => {
     it('should register a new user successfully', async () => {
       // Arrange
-      const registerDto: RegisterDto = {
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'password123',
-      };
-
-      const createdUser: User = {
-        id: 1,
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'hashed-password',
-        role: Role.USER,
-        provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const registerDto: RegisterDto = mockRegisterDto;
+      const createdUser: User = mockCreatedUser;
 
       authRepository.findUserByEmail.mockResolvedValue(null);
       authRepository.createUser.mockResolvedValue(createdUser);
@@ -98,25 +86,8 @@ describe('RegisterUseCase', () => {
 
     it('should throw ConflictException if user already exists', async () => {
       // Arrange
-      const registerDto: RegisterDto = {
-        name: 'Test User',
-        email: 'existing@example.com',
-        password: 'password123',
-      };
-
-      const existingUser: User = {
-        id: 1,
-        name: 'Existing User',
-        email: 'existing@example.com',
-        password: 'hashed-password',
-        role: Role.USER,
-        provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const registerDto: RegisterDto = mockRegisterDto;
+      const existingUser: User = mockExistingUser;
 
       authRepository.findUserByEmail.mockResolvedValue(existingUser);
 

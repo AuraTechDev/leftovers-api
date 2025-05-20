@@ -2,9 +2,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UpdateProfileUseCase } from '../update-profile.use-case';
 import { AuthRepository } from '../../../infrastructure/repositories/auth.repository';
-import { Provider, Role } from '@prisma/client';
 import { ConflictException } from '@nestjs/common';
-import { UpdateProfileDto } from '../../../infrastructure/dto/update-profile.dto';
+import { UpdateProfileDto } from '../../dtos/update-profile.dto';
+import {
+  mockUpdateProfileDto,
+  mockOriginalUser,
+  mockUpdatedUser,
+  mockExistingUserForUpdateProfile,
+  mockCurrentUser,
+  mockUpdatedCurrentUser,
+} from '../../../__mocks__/auth.mocks';
 
 describe('UpdateProfileUseCase', () => {
   let useCase: UpdateProfileUseCase;
@@ -38,30 +45,8 @@ describe('UpdateProfileUseCase', () => {
     it('should update profile successfully', async () => {
       // Arrange
       const userId = 1;
-      const updateProfileDto: UpdateProfileDto = {
-        name: 'Updated Name',
-        photoUrl: 'https://new-photo.url',
-      };
-
-      const user = {
-        id: userId,
-        name: 'Original Name',
-        email: 'test@example.com',
-        password: 'hashed-password',
-        role: Role.USER,
-        provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const updatedUser = {
-        ...user,
-        name: updateProfileDto.name as string,
-        photoUrl: updateProfileDto.photoUrl ?? null,
-      };
+      const updateProfileDto: UpdateProfileDto = mockUpdateProfileDto;
+      const updatedUser = mockUpdatedUser;
 
       authRepository.updateUser.mockResolvedValue(updatedUser);
 
@@ -86,23 +71,8 @@ describe('UpdateProfileUseCase', () => {
       const updateProfileDto: UpdateProfileDto = {
         email: 'newemail@example.com',
       };
-
-      const user = {
-        id: userId,
-        name: 'Test User',
-        email: 'original@example.com',
-        password: 'hashed-password',
-        role: Role.USER,
-        provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
       const updatedUser = {
-        ...user,
+        ...mockOriginalUser,
         email: updateProfileDto.email as string,
       };
 
@@ -131,20 +101,7 @@ describe('UpdateProfileUseCase', () => {
       const updateProfileDto: UpdateProfileDto = {
         email: 'existing@example.com',
       };
-
-      const existingUser = {
-        id: 2, // Different user
-        name: 'Another User',
-        email: updateProfileDto.email as string,
-        password: 'hashed-password',
-        role: Role.USER,
-        provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const existingUser = mockExistingUserForUpdateProfile;
 
       authRepository.findUserByEmail.mockResolvedValue(existingUser);
 
@@ -165,25 +122,8 @@ describe('UpdateProfileUseCase', () => {
         email: 'current@example.com',
         name: 'Updated Name',
       };
-
-      const currentUser = {
-        id: userId,
-        name: 'Current User',
-        email: updateProfileDto.email as string, // Same email
-        password: 'hashed-password',
-        role: Role.USER,
-        provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const updatedUser = {
-        ...currentUser,
-        name: updateProfileDto.name as string,
-      };
+      const currentUser = mockCurrentUser;
+      const updatedUser = mockUpdatedCurrentUser;
 
       authRepository.findUserByEmail.mockResolvedValue(currentUser);
       authRepository.updateUser.mockResolvedValue(updatedUser);

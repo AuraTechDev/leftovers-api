@@ -2,7 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { GoogleStrategy } from '../google.strategy';
-import { ValidateOAuthUserUseCase } from '../../../application/use-cases';
+import { ValidateOAuthUserUseCase } from '../../../application/use-cases/validate-oauth-user.use-case';
 import { Provider, Role } from '@prisma/client';
 
 // Import GoogleProfile interface
@@ -62,14 +62,14 @@ describe('GoogleStrategy', () => {
       id: 1,
       email: 'john.doe@example.com',
       name: 'John Doe',
-      password: null,
+      password: undefined,
       photoUrl: 'https://example.com/photo.jpg',
       role: Role.USER,
       provider: Provider.GOOGLE,
       providerId: 'google-123',
       createdAt: new Date(),
       updatedAt: new Date(),
-      businessId: null,
+      businessId: undefined,
     };
     validateOAuthUserUseCase.execute.mockResolvedValue(mockUser);
     const done = jest.fn();
