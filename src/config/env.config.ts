@@ -30,6 +30,9 @@ const envSchema = z.object({
 
   // Frontend URL
   FRONTEND_URL: z.string().url(),
+
+  // Resend
+  RESEND_API_KEY: z.string(),
 });
 
 export type Env = z.infer<typeof envSchema>;
