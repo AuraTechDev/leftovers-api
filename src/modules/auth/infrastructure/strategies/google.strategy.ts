@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { env } from '../../../../config/env.config';
@@ -25,8 +25,8 @@ export class GoogleStrategy extends PassportStrategy(
     super({
       clientID: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
-      callbackURL: 'http://localhost:3000/auth/google/callback',
-      scope: ['email', 'profile'],
+      callbackURL: env.GOOGLE_CALLBACK_URL,
+      scope: env.GOOGLE_SCOPE,
     });
   }
 
@@ -36,16 +36,21 @@ export class GoogleStrategy extends PassportStrategy(
     profile: GoogleProfile,
     done: VerifyCallback,
   ) {
-    const { id, name, emails, photos } = profile;
-
-    const user = await this.validateOAuthUserUseCase.execute({
-      provider: Provider.GOOGLE,
-      providerId: id,
-      email: emails[0].value,
-      name: name.givenName + ' ' + name.familyName,
-      photoUrl: photos?.[0]?.value,
-    });
-
-    done(null, user);
+    try {
+      const { id, name, emails, photos } = profile;
+      if (!emails || emails.length === 0) {
+        return done(new UnauthorizedException('Email is required'), null);
+      }
+      const user = await this.validateOAuthUserUseCase.execute({
+        provider: Provider.GOOGLE,
+        providerId: id,
+        email: emails[0].value,
+        name: name.givenName + ' ' + name.familyName,
+        photoUrl: photos?.[0]?.value,
+      });
+      done(null, user);
+    } catch (error) {
+      done(error, null);
+    }
   }
 }
