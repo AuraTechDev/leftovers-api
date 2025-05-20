@@ -2,8 +2,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ValidateOAuthUserUseCase } from '../validate-oauth-user.use-case';
 import { AuthRepository } from '../../../infrastructure/repositories/auth.repository';
-import { Provider, Role, User } from '@prisma/client';
-import { OAuthLoginDto } from '../../../infrastructure/dto/oauth-login.dto';
+import { Role } from '@prisma/client';
+import {
+  mockOAuthData,
+  mockOAuthUser,
+  mockOAuthExistingUser,
+  mockOAuthUpdatedUser,
+} from '../../../__mocks__/auth.mocks';
 
 describe('ValidateOAuthUserUseCase', () => {
   let useCase: ValidateOAuthUserUseCase;
@@ -35,39 +40,17 @@ describe('ValidateOAuthUserUseCase', () => {
   });
 
   describe('execute', () => {
-    const mockOAuthData: OAuthLoginDto = {
-      provider: Provider.GOOGLE,
-      providerId: 'google-123',
-      email: 'test@example.com',
-      name: 'Test User',
-      photoUrl: 'https://example.com/photo.jpg',
-    };
-
-    const mockUser: User = {
-      id: 1,
-      name: 'Test User',
-      email: 'test@example.com',
-      password: null,
-      role: Role.USER,
-      provider: Provider.GOOGLE,
-      providerId: 'google-123',
-      photoUrl: 'https://example.com/photo.jpg',
-      businessId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
     it('should return existing user when found', async () => {
       // Arrange
       authRepository.findUserByProviderAndProviderId.mockResolvedValue(
-        mockUser,
+        mockOAuthUser,
       );
 
       // Act
       const result = await useCase.execute(mockOAuthData);
 
       // Assert
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockOAuthUser);
       expect(
         authRepository.findUserByProviderAndProviderId,
       ).toHaveBeenCalledWith(mockOAuthData.provider, mockOAuthData.providerId);
@@ -78,13 +61,13 @@ describe('ValidateOAuthUserUseCase', () => {
     it('should create new user when not found', async () => {
       // Arrange
       authRepository.findUserByProviderAndProviderId.mockResolvedValue(null);
-      authRepository.createUser.mockResolvedValue(mockUser);
+      authRepository.createUser.mockResolvedValue(mockOAuthUser);
 
       // Act
       const result = await useCase.execute(mockOAuthData);
 
       // Assert
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockOAuthUser);
       expect(
         authRepository.findUserByProviderAndProviderId,
       ).toHaveBeenCalledWith(mockOAuthData.provider, mockOAuthData.providerId);
@@ -100,13 +83,8 @@ describe('ValidateOAuthUserUseCase', () => {
 
     it('should update user when profile info has changed', async () => {
       // Arrange
-      const existingUser = {
-        ...mockUser,
-        name: 'Old Name',
-        photoUrl: 'https://example.com/old-photo.jpg',
-      };
-
-      const updatedUser = { ...mockUser };
+      const existingUser = mockOAuthExistingUser;
+      const updatedUser = mockOAuthUpdatedUser;
 
       authRepository.findUserByProviderAndProviderId.mockResolvedValue(
         existingUser,
@@ -130,14 +108,14 @@ describe('ValidateOAuthUserUseCase', () => {
     it('should not update user when profile info is the same', async () => {
       // Arrange
       authRepository.findUserByProviderAndProviderId.mockResolvedValue(
-        mockUser,
+        mockOAuthUser,
       );
 
       // Act
       const result = await useCase.execute(mockOAuthData);
 
       // Assert
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockOAuthUser);
       expect(
         authRepository.findUserByProviderAndProviderId,
       ).toHaveBeenCalledWith(mockOAuthData.provider, mockOAuthData.providerId);

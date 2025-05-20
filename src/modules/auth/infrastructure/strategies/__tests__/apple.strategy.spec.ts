@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppleStrategy } from '../apple.strategy';
-import { ValidateOAuthUserUseCase } from '../../../application/use-cases';
+import { ValidateOAuthUserUseCase } from '../../../application/use-cases/validate-oauth-user.use-case';
 import { Provider } from '@prisma/client';
 
 describe('AppleStrategy', () => {

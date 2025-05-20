@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { Role, Provider } from '@prisma/client';
 import { LocalStrategy } from '../local.strategy';
-import { ValidateUserUseCase } from '../../../application/use-cases';
+import { ValidateUserUseCase } from '../../../application/use-cases/validate-user.use-case';
 import { AuthUser } from '../../../domain/interfaces/user.interface';
 
 describe('LocalStrategy', () => {

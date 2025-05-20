@@ -2,8 +2,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ValidateUserUseCase } from '../validate-user.use-case';
 import { AuthRepository } from '../../../infrastructure/repositories/auth.repository';
-import { Provider, Role, User } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import {
+  mockLocalUser,
+  mockGoogleUserForValidate,
+} from '../../../__mocks__/auth.mocks';
+import { User } from '../../../../users/domain/entities/user.entity';
 
 // Mock para bcrypt
 jest.mock('bcryptjs', () => ({
@@ -44,19 +48,7 @@ describe('ValidateUserUseCase', () => {
       const password = 'password123';
       const hashedPassword = 'hashed-password';
 
-      const user: User = {
-        id: 1,
-        name: 'Test User',
-        email,
-        password: hashedPassword,
-        role: Role.USER,
-        provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const user: User = mockLocalUser;
 
       authRepository.findUserByEmail.mockResolvedValue(user);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -97,19 +89,7 @@ describe('ValidateUserUseCase', () => {
       const email = 'test@example.com';
       const password = 'password123';
 
-      const user: User = {
-        id: 1,
-        name: 'Test User',
-        email,
-        password: 'hashed-password',
-        role: Role.USER,
-        provider: Provider.GOOGLE,
-        providerId: 'google-id',
-        photoUrl: null,
-        businessId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const user: User = mockGoogleUserForValidate;
 
       authRepository.findUserByEmail.mockResolvedValue(user);
 
@@ -128,19 +108,7 @@ describe('ValidateUserUseCase', () => {
       const password = 'wrong-password';
       const hashedPassword = 'hashed-password';
 
-      const user: User = {
-        id: 1,
-        name: 'Test User',
-        email,
-        password: hashedPassword,
-        role: Role.USER,
-        provider: Provider.LOCAL,
-        providerId: null,
-        photoUrl: null,
-        businessId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const user: User = mockLocalUser;
 
       authRepository.findUserByEmail.mockResolvedValue(user);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
