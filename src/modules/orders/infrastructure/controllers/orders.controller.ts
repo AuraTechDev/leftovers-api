@@ -38,11 +38,11 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard)
   async createOrder(
     @Body() createOrderDto: CreateOrderDto,
-    @GetUser() currentUser: AuthUser,
+    @GetUser('id') userId: number,
   ): Promise<OrderResponseDto> {
     // Set the user ID from the authenticated user
     // This ensures users can only create orders for themselves
-    createOrderDto.userId = currentUser.id;
+    createOrderDto.userId = userId;
 
     return this.createOrderUseCase.execute(createOrderDto);
   }
@@ -66,21 +66,21 @@ export class OrdersController {
   @Get('user')
   @UseGuards(JwtAuthGuard)
   async getUserOrders(
-    @GetUser() currentUser: AuthUser,
+    @GetUser('id') userId: number,
     @Query() query: GetOrdersQueryDto,
   ): Promise<PaginatedOrdersResponseDto> {
-    return this.getUserOrdersUseCase.execute(currentUser.id, query);
+    return this.getUserOrdersUseCase.execute(userId, query);
   }
 
   @Get('business')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.BUSINESS, Role.SUPER_ADMIN)
   async getBusinessOrders(
-    @GetUser() currentUser: AuthUser,
+    @GetUser('id') userId: number,
     @Query() query: GetOrdersQueryDto,
   ): Promise<PaginatedOrdersResponseDto> {
     // For super admin, we'd need another approach, possibly requiring a businessId parameter
     // For now, we're just using the user ID which for BUSINESS role is the business ID
-    return this.getBusinessOrdersUseCase.execute(currentUser.id, query);
+    return this.getBusinessOrdersUseCase.execute(userId, query);
   }
 }

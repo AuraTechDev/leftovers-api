@@ -32,11 +32,10 @@ describe('GetBusinessRatingsUseCase', () => {
 
   describe('execute', () => {
     it('should return business ratings without filters', async () => {
-      const userId = 123;
       const businessId = 789;
       const query = new BusinessRatingsQueryDto();
 
-      const result = await useCase.execute(userId, businessId, query);
+      const result = await useCase.execute(businessId, query);
 
       expect(ratingsRepositoryMock.findByBusiness).toHaveBeenCalledWith(
         businessId,
@@ -51,12 +50,11 @@ describe('GetBusinessRatingsUseCase', () => {
     });
 
     it('should return business ratings with product filter', async () => {
-      const userId = 123;
       const businessId = 789;
       const query = new BusinessRatingsQueryDto();
       query.productId = 456;
 
-      const result = await useCase.execute(userId, businessId, query);
+      const result = await useCase.execute(businessId, query);
 
       expect(ratingsRepositoryMock.findByBusiness).toHaveBeenCalledWith(
         businessId,
@@ -68,13 +66,12 @@ describe('GetBusinessRatingsUseCase', () => {
     });
 
     it('should return business ratings with date range filter', async () => {
-      const userId = 123;
       const businessId = 789;
       const query = new BusinessRatingsQueryDto();
       query.startDate = '2023-01-01';
       query.endDate = '2023-12-31';
 
-      const result = await useCase.execute(userId, businessId, query);
+      const result = await useCase.execute(businessId, query);
 
       expect(ratingsRepositoryMock.findByBusiness).toHaveBeenCalledWith(
         businessId,
@@ -89,12 +86,11 @@ describe('GetBusinessRatingsUseCase', () => {
     });
 
     it('should return business ratings with rating value filter', async () => {
-      const userId = 123;
       const businessId = 789;
       const query = new BusinessRatingsQueryDto();
       query.ratingValue = 4;
 
-      const result = await useCase.execute(userId, businessId, query);
+      const result = await useCase.execute(businessId, query);
 
       expect(ratingsRepositoryMock.findByBusiness).toHaveBeenCalledWith(
         businessId,
@@ -106,7 +102,6 @@ describe('GetBusinessRatingsUseCase', () => {
     });
 
     it('should pass all filters to repository', async () => {
-      const userId = 123;
       const businessId = 789;
       const query = new BusinessRatingsQueryDto();
       query.productId = 456;
@@ -114,7 +109,7 @@ describe('GetBusinessRatingsUseCase', () => {
       query.startDate = '2023-01-01';
       query.endDate = '2023-12-31';
 
-      const result = await useCase.execute(userId, businessId, query);
+      const result = await useCase.execute(businessId, query);
 
       expect(ratingsRepositoryMock.findByBusiness).toHaveBeenCalledWith(
         businessId,

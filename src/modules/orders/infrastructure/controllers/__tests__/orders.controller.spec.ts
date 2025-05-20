@@ -82,7 +82,7 @@ describe('OrdersController', () => {
         .mockResolvedValue(mockResponse);
 
       // Execute
-      const result = await controller.createOrder(mockOrderDto, mockUser);
+      const result = await controller.createOrder(mockOrderDto, mockUser.id);
 
       // Assert
       expect(mockOrderDto.userId).toEqual(mockUser.id);
@@ -137,7 +137,7 @@ describe('OrdersController', () => {
         .mockResolvedValue(mockResponse);
 
       // Execute
-      const result = await controller.getUserOrders(mockUser, query);
+      const result = await controller.getUserOrders(mockUser.id, query);
 
       // Assert
       expect(executeSpy).toHaveBeenCalledWith(mockUser.id, query);
@@ -158,7 +158,7 @@ describe('OrdersController', () => {
         .mockResolvedValue(mockResponse);
 
       // Execute
-      const result = await controller.getBusinessOrders(mockUser, query);
+      const result = await controller.getBusinessOrders(mockUser.id, query);
 
       // Assert
       expect(executeSpy).toHaveBeenCalledWith(mockUser.id, query);

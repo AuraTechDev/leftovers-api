@@ -268,7 +268,6 @@ describe('AuthController', () => {
 
   describe('updateProfile', () => {
     it('should update the user profile', async () => {
-      const req = { user: mockUser } as RequestWithUser;
       const updateProfileDto: UpdateProfileDto = {
         name: 'Updated Name',
         email: 'updated@example.com',
@@ -288,7 +287,10 @@ describe('AuthController', () => {
 
       updateProfileUseCase.execute.mockResolvedValue(updatedUser);
 
-      const result = await controller.updateProfile(req.user, updateProfileDto);
+      const result = await controller.updateProfile(
+        mockUser.id,
+        updateProfileDto,
+      );
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(updateProfileUseCase.execute).toHaveBeenCalledWith(
@@ -301,7 +303,6 @@ describe('AuthController', () => {
 
   describe('changePassword', () => {
     it('should change the user password', async () => {
-      const req = { user: mockUser } as RequestWithUser;
       const changePasswordDto: ChangePasswordDto = {
         currentPassword: 'current-password',
         newPassword: 'new-password',
@@ -310,7 +311,7 @@ describe('AuthController', () => {
       changePasswordUseCase.execute.mockResolvedValue(undefined);
 
       const result = await controller.changePassword(
-        req.user,
+        mockUser.id,
         changePasswordDto,
       );
 

@@ -6,11 +6,7 @@ import { BusinessRatingsQueryDto } from '../dtos/business-ratings-query.dto';
 export class GetBusinessRatingsUseCase {
   constructor(private readonly ratingsRepository: RatingsRepository) {}
 
-  async execute(
-    userId: number,
-    businessId: number,
-    query: BusinessRatingsQueryDto,
-  ) {
+  async execute(businessId: number, query: BusinessRatingsQueryDto) {
     // Process query parameters
     const options = {
       productId: query.productId,
