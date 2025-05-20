@@ -3,25 +3,14 @@ import { AppleStrategy } from '../apple.strategy';
 import { ValidateOAuthUserUseCase } from '../../../application/use-cases';
 import { Provider } from '@prisma/client';
 
-jest.mock('../../../../config/env.config', () => ({
-  env: {
-    APPLE_CLIENT_ID: 'test-apple-client-id',
-    APPLE_CLIENT_SECRET: 'test-apple-client-secret',
-    APPLE_CALLBACK_URL: 'http://localhost:3000/auth/apple/callback',
-    APPLE_KEY_ID: 'test-key-id',
-    APPLE_PRIVATE_KEY_LOCATION: 'test/path/to/key',
-    APPLE_SCOPE: ['name', 'email'],
-  },
-}));
-
 describe('AppleStrategy', () => {
   let strategy: AppleStrategy;
-  let validateOAuthUserUseCase: jest.Mocked<ValidateOAuthUserUseCase>;
+
+  const mockValidateOAuthUserUseCase = {
+    execute: jest.fn(),
+  };
 
   beforeEach(async () => {
-    const mockValidateOAuthUserUseCase = {
-      execute: jest.fn(),
-    };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AppleStrategy,
@@ -31,63 +20,115 @@ describe('AppleStrategy', () => {
         },
       ],
     }).compile();
+
     strategy = module.get<AppleStrategy>(AppleStrategy);
-    validateOAuthUserUseCase = module.get(ValidateOAuthUserUseCase);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
     expect(strategy).toBeDefined();
   });
 
-  it('should validate and return user', async () => {
-    const profile = {
-      id: 'apple-123',
-      email: 'apple.user@example.com',
-      name: { firstName: 'Apple', lastName: 'User' },
+  describe('validate', () => {
+    const mockProfile = {
+      id: 'apple123',
+      email: 'test@example.com',
+      name: {
+        firstName: 'John',
+        lastName: 'Doe',
+      },
     };
-    const mockUser = { id: 1, email: 'apple.user@example.com' };
-    validateOAuthUserUseCase.execute.mockResolvedValue(mockUser);
-    const done = jest.fn();
-    await strategy.validate({}, 'access', 'refresh', 'idtoken', profile as any, done);
-    expect(validateOAuthUserUseCase.execute).toHaveBeenCalledWith({
-      provider: Provider.APPLE,
-      providerId: 'apple-123',
-      email: 'apple.user@example.com',
-      name: 'Apple User',
-      photoUrl: undefined,
-    });
-    expect(done).toHaveBeenCalledWith(null, mockUser);
-  });
 
-  it('should use fallback email if not provided', async () => {
-    const profile = {
-      id: 'apple-456',
-      name: { firstName: 'Apple', lastName: 'Fallback' },
-    };
-    const mockUser = { id: 2, email: 'apple-456@apple.user' };
-    validateOAuthUserUseCase.execute.mockResolvedValue(mockUser);
-    const done = jest.fn();
-    await strategy.validate({}, 'access', 'refresh', 'idtoken', profile as any, done);
-    expect(validateOAuthUserUseCase.execute).toHaveBeenCalledWith({
-      provider: Provider.APPLE,
-      providerId: 'apple-456',
-      email: 'apple-456@apple.user',
-      name: 'Apple Fallback',
-      photoUrl: undefined,
-    });
-    expect(done).toHaveBeenCalledWith(null, mockUser);
-  });
+    const mockDone = jest.fn();
 
-  it('should handle use-case error', async () => {
-    const profile = {
-      id: 'apple-789',
-      email: 'fail.user@example.com',
-      name: { firstName: 'Fail', lastName: 'User' },
-    };
-    const error = new Error('Failed to validate user');
-    validateOAuthUserUseCase.execute.mockRejectedValue(error);
-    const done = jest.fn();
-    await strategy.validate({}, 'access', 'refresh', 'idtoken', profile as any, done);
-    expect(done).toHaveBeenCalledWith(error, null);
+    it('should successfully validate user with complete profile', async () => {
+      const mockUser = { id: 1, email: 'test@example.com' };
+      mockValidateOAuthUserUseCase.execute.mockResolvedValue(mockUser);
+
+      await strategy.validate(
+        {},
+        'accessToken',
+        'refreshToken',
+        'idToken',
+        mockProfile,
+        mockDone,
+      );
+
+      expect(mockValidateOAuthUserUseCase.execute).toHaveBeenCalledWith({
+        provider: Provider.APPLE,
+        providerId: 'apple123',
+        email: 'test@example.com',
+        name: 'John Doe',
+        photoUrl: undefined,
+      });
+      expect(mockDone).toHaveBeenCalledWith(null, mockUser);
+    });
+
+    it('should handle profile without email', async () => {
+      const profileWithoutEmail = { ...mockProfile, email: undefined };
+      const mockUser = { id: 1, email: 'apple123@apple.user' };
+      mockValidateOAuthUserUseCase.execute.mockResolvedValue(mockUser);
+
+      await strategy.validate(
+        {},
+        'accessToken',
+        'refreshToken',
+        'idToken',
+        profileWithoutEmail,
+        mockDone,
+      );
+
+      expect(mockValidateOAuthUserUseCase.execute).toHaveBeenCalledWith({
+        provider: Provider.APPLE,
+        providerId: 'apple123',
+        email: 'apple123@apple.user',
+        name: 'John Doe',
+        photoUrl: undefined,
+      });
+      expect(mockDone).toHaveBeenCalledWith(null, mockUser);
+    });
+
+    it('should handle profile without name', async () => {
+      const profileWithoutName = { id: 'apple123', email: 'test@example.com' };
+      const mockUser = { id: 1, email: 'test@example.com' };
+      mockValidateOAuthUserUseCase.execute.mockResolvedValue(mockUser);
+
+      await strategy.validate(
+        {},
+        'accessToken',
+        'refreshToken',
+        'idToken',
+        profileWithoutName,
+        mockDone,
+      );
+
+      expect(mockValidateOAuthUserUseCase.execute).toHaveBeenCalledWith({
+        provider: Provider.APPLE,
+        providerId: 'apple123',
+        email: 'test@example.com',
+        name: 'Apple User apple',
+        photoUrl: undefined,
+      });
+      expect(mockDone).toHaveBeenCalledWith(null, mockUser);
+    });
+
+    it('should handle validation error', async () => {
+      const error = new Error('Validation failed');
+      mockValidateOAuthUserUseCase.execute.mockRejectedValue(error);
+
+      await strategy.validate(
+        {},
+        'accessToken',
+        'refreshToken',
+        'idToken',
+        mockProfile,
+        mockDone,
+      );
+
+      expect(mockDone).toHaveBeenCalledWith(error);
+    });
   });
-}); 
+});
