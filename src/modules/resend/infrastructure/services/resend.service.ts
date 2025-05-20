@@ -4,7 +4,7 @@ import { env } from '../../../../config/env.config';
 
 /**
  * Options for sending an email via Resend.
- * You can extend this interface as needed (attachments, cc, bcc, etc.)
+ * Extend as needed (attachments, cc, bcc, etc.)
  */
 export interface ResendEmailOptions {
   to: string;
@@ -20,12 +20,37 @@ export interface ResendEmailOptions {
 @Injectable()
 export class ResendService implements IEmailSender {
   private readonly apiKey = env.RESEND_API_KEY;
+  private readonly apiUrl = env.RESEND_API_URL;
 
   async sendEmail(options: ResendEmailOptions): Promise<void> {
-    // TODO: Integrate with Resend API using this.apiKey
-    // Example using fetch/axios/SDK:
-    // await resend.emails.send({ ...options, apiKey: this.apiKey });
-    console.log('Sending email via Resend:', options);
-    // throw new Error('Not implemented: integrate with Resend API');
+    const payload: any = {
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+      from: options.from || 'noreply@yourdomain.com', // Set a default sender if needed
+      // cc: options.cc,
+      // bcc: options.bcc,
+      // attachments: options.attachments,
+    };
+
+    // Remove undefined fields
+    Object.keys(payload).forEach(
+      (key) => payload[key] === undefined && delete payload[key]
+    );
+
+    const response = await fetch(this.apiUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Resend API error: ${error}`);
+    }
   }
 } 
