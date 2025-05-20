@@ -7,27 +7,9 @@ import {
 } from 'cloudinary';
 import { env } from '../../config/env.config';
 import { Readable } from 'stream';
-
-// Simple in-memory cache for frequently accessed images
-interface CacheEntry {
-  data: unknown;
-  timestamp: number;
-}
-
-// Define more specific return types
-interface CloudinaryResourcesResponse {
-  resources: unknown[];
-  next_cursor?: string;
-  rate_limit_allowed?: number;
-  rate_limit_reset_at?: string;
-  rate_limit_remaining?: number;
-}
-
-interface CloudinaryFolderResponse {
-  success: boolean;
-  path: string;
-  name: string;
-}
+import { CacheEntry } from './interfaces/cache-entry.interface';
+import { CloudinaryFolderResponse } from './interfaces/folder-response.interface';
+import { CloudinaryResourcesResponse } from './interfaces/resource-response.interface';
 
 // Type for transformations
 type TransformationOption =
