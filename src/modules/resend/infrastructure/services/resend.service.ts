@@ -1,18 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Resend } from 'resend';
 import { IEmailParams } from '../../domain/interfaces/email-params.interface';
 import { env } from '../../../../config/env.config';
-import { IEmailSender } from '../../domain/interfaces/email-sender.interface';
 
 @Injectable()
-export class ResendService implements IEmailSender {
+export class ResendService implements OnModuleInit {
   private readonly logger = new Logger(ResendService.name);
-  private readonly resend: Resend;
+  private resend: Resend;
   private readonly defaultFrom: string;
 
   constructor() {
-    this.resend = new Resend(env.RESEND_API_KEY);
     this.defaultFrom = env.RESEND_FROM_EMAIL || 'no-reply@leftovers.app';
+  }
+
+  onModuleInit() {
+    this.resend = new Resend(env.RESEND_API_KEY);
   }
 
   async sendEmail(params: IEmailParams): Promise<void> {

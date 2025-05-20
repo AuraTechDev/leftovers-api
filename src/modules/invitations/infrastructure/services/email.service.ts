@@ -1,16 +1,13 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { BusinessInvitation } from '../../domain/entities/business-invitation.entity';
 import { env } from '../../../../config/env.config';
-import { IEmailSender } from '../../../resend/domain/interfaces/email-sender.interface';
+import { ResendService } from '../../../resend/infrastructure/services/resend.service';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
 
-  constructor(
-    @Inject('IEmailSender')
-    private readonly emailSender: IEmailSender,
-  ) {}
+  constructor(private readonly resendService: ResendService) {}
 
   private async sendTemplatedEmail(params: {
     to: string;
@@ -24,7 +21,7 @@ export class EmailService {
       ? `Reminder: Join ${businessName} on Leftovers`
       : `Join ${businessName} on Leftovers`;
 
-    await this.emailSender.sendEmail({
+    await this.resendService.sendEmail({
       to,
       subject,
       html: `
