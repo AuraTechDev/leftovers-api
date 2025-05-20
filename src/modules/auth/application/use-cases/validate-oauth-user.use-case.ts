@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { User, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { AuthRepository } from '../../infrastructure/repositories/auth.repository';
-import { OAuthLoginDto } from '../../infrastructure/dto/oauth-login.dto';
+import { OAuthLoginDto } from '../dtos/oauth-login.dto';
+import { User } from '../../../users/domain/entities/user.entity';
 
 @Injectable()
 export class ValidateOAuthUserUseCase {

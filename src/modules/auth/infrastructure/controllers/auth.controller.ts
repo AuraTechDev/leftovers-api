@@ -12,15 +12,13 @@ import { LocalAuthGuard } from '../guards/local-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { GoogleAuthGuard } from '../guards/google-auth.guard';
 import { AppleAuthGuard } from '../guards/apple-auth.guard';
-import {
-  LoginUseCase,
-  RegisterUseCase,
-  RefreshTokensUseCase,
-  LogoutUseCase,
-  OAuthLoginUseCase,
-  UpdateProfileUseCase,
-  ChangePasswordUseCase,
-} from '../../application/use-cases';
+import { LoginUseCase } from '../../application/use-cases/login.use-case';
+import { RegisterUseCase } from '../../application/use-cases/register.use-case';
+import { RefreshTokensUseCase } from '../../application/use-cases/refresh-tokens.use-case';
+import { LogoutUseCase } from '../../application/use-cases/logout.use-case';
+import { OAuthLoginUseCase } from '../../application/use-cases/oauth-login.use-case';
+import { UpdateProfileUseCase } from '../../application/use-cases/update-profile.use-case';
+import { ChangePasswordUseCase } from '../../application/use-cases/change-password.use-case';
 
 @Controller('auth')
 export class AuthController {

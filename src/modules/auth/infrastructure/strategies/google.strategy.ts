@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { env } from '../../../../config/env.config';
 import { Provider } from '@prisma/client';
-import { ValidateOAuthUserUseCase } from '../../application/use-cases';
+import { ValidateOAuthUserUseCase } from '../../application/use-cases/validate-oauth-user.use-case';
 
 // Define interface for Google profile
 interface GoogleProfile {

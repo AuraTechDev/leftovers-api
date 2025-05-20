@@ -12,17 +12,15 @@ import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
 import { AppleStrategy } from './infrastructure/strategies/apple.strategy';
 import { RolesGuard } from './infrastructure/guards/roles.guard';
 import { AuthRepository } from './infrastructure/repositories/auth.repository';
-import {
-  LoginUseCase,
-  RegisterUseCase,
-  RefreshTokensUseCase,
-  LogoutUseCase,
-  ValidateUserUseCase,
-  OAuthLoginUseCase,
-  UpdateProfileUseCase,
-  ChangePasswordUseCase,
-  ValidateOAuthUserUseCase,
-} from './application/use-cases';
+import { LoginUseCase } from './application/use-cases/login.use-case';
+import { RegisterUseCase } from './application/use-cases/register.use-case';
+import { RefreshTokensUseCase } from './application/use-cases/refresh-tokens.use-case';
+import { LogoutUseCase } from './application/use-cases/logout.use-case';
+import { ValidateUserUseCase } from './application/use-cases/validate-user.use-case';
+import { OAuthLoginUseCase } from './application/use-cases/oauth-login.use-case';
+import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case';
+import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
+import { ValidateOAuthUserUseCase } from './application/use-cases/validate-oauth-user.use-case';
 
 @Module({
   imports: [
