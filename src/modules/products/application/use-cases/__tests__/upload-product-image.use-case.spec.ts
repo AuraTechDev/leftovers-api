@@ -23,7 +23,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { UploadProductImageUseCase } from '../upload-product-image.use-case';
 import { ProductsRepository } from '../../../infrastructure/repositories/products.repository';
-import { CloudinaryImageService } from '../../../../cloudinary/cloudinary-image.service';
+import { CloudinaryImageService } from '../../../../cloudinary/infrastructure/services/cloudinary-image.service';
 import { createMockProductsRepository } from '../../../__mocks__/product-use-cases.mock';
 import { createMockCloudinaryUploadResult } from '../../../__mocks__/cloudinary.mock';
 import { ProductResponseDto } from '../../dtos/product-response.dto';

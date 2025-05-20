@@ -34,7 +34,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { BusinessResponseDto } from '../../application/dtos/business-response.dto';
 import { imageUploadOptions } from '../../../cloudinary/constants/upload-options';
 import { GetUser } from '../../../auth/infrastructure/decorators/get-user.decorator';
-import { UploadedFileType } from '../../../cloudinary/interfaces/file-upload.interface';
+import { UploadedFileType } from '../../../cloudinary/domain/interfaces/file-upload.interface';
 
 @Controller('business')
 export class BusinessController {

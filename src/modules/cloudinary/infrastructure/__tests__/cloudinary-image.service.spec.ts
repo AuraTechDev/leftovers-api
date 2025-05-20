@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   CloudinaryImageService,
   EntityRepository,
-} from '../cloudinary-image.service';
-import { CloudinaryService } from '../cloudinary.service';
+} from '../services/cloudinary-image.service';
+import { CloudinaryService } from '../services/cloudinary.service';
 import { Logger } from '@nestjs/common';
 
 // Mock entity for testing

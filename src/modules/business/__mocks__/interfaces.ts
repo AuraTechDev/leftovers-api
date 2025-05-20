@@ -1,5 +1,5 @@
 import { AuthUser } from '../../auth/domain/interfaces/user.interface';
-import { UploadedFileType } from '../../cloudinary/interfaces/file-upload.interface';
+import { UploadedFileType } from '../../cloudinary/domain/interfaces/file-upload.interface';
 
 /**
  * Interface for request objects that contain user information

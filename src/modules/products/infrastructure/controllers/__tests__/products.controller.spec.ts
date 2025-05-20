@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { ProductsController } from '../products.controller';
-import { UploadedFileType } from '../../../../cloudinary/interfaces/file-upload.interface';
+import { UploadedFileType } from '../../../../cloudinary/domain/interfaces/file-upload.interface';
 
 // Import use cases
 import { CreateProductUseCase } from '../../../application/use-cases/create-product.use-case';
