@@ -5,7 +5,7 @@ import { GetBusinessRatingsUseCase } from '../../../application/use-cases/get-bu
 import { CreateRatingDto } from '../../../application/dtos/create-rating.dto';
 import { BusinessRatingsQueryDto } from '../../../application/dtos/business-ratings-query.dto';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { mockRatings } from '../../../__mocks__/ratings.mock';
+import { mockRatings, mockUser } from '../../../__mocks__/ratings.mock';
 
 // Mock objects for testing
 const createMockSubmitRatingUseCase = () => ({
@@ -67,7 +67,7 @@ describe('RatingsController', () => {
       mockSubmitRatingUseCase.execute.mockResolvedValue(mockRating);
 
       // Act
-      const result = await controller.submitRating(userId, createRatingDto);
+      const result = await controller.submitRating(mockUser, createRatingDto);
 
       // Assert
       expect(mockSubmitRatingUseCase.execute).toHaveBeenCalledWith(
@@ -93,7 +93,7 @@ describe('RatingsController', () => {
 
       // Act & Assert
       await expect(
-        controller.submitRating(userId, createRatingDto),
+        controller.submitRating(mockUser, createRatingDto),
       ).rejects.toThrow(BadRequestException);
       expect(mockSubmitRatingUseCase.execute).toHaveBeenCalledWith(
         userId,
@@ -117,7 +117,7 @@ describe('RatingsController', () => {
 
       // Act & Assert
       await expect(
-        controller.submitRating(userId, createRatingDto),
+        controller.submitRating(mockUser, createRatingDto),
       ).rejects.toThrow(UnauthorizedException);
       expect(mockSubmitRatingUseCase.execute).toHaveBeenCalledWith(
         userId,
@@ -141,7 +141,7 @@ describe('RatingsController', () => {
 
       // Act
       const result = await controller.getBusinessRatings(
-        userId,
+        mockUser,
         businessId,
         query,
       );
@@ -166,7 +166,7 @@ describe('RatingsController', () => {
 
       // Act
       const result = await controller.getBusinessRatings(
-        userId,
+        mockUser,
         businessId,
         query,
       );

@@ -1,6 +1,7 @@
 import { Rating } from '../domain/entities/rating.entity';
 import { Product } from '../../products/domain/entities/product.entity';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Role, Provider } from '@prisma/client';
+import { AuthUser } from '../../auth/domain/interfaces/user.interface';
 
 // Mock ratings for testing
 export const mockRatings = [
@@ -74,4 +75,13 @@ export const mockCompletedOrder = {
 export const mockPendingOrder = {
   ...mockOrder,
   status: OrderStatus.PENDING,
+};
+
+// Mock user (with USER role)
+export const mockUser: AuthUser = {
+  id: 2,
+  email: 'business@example.com',
+  name: 'Business User',
+  role: Role.USER,
+  provider: Provider.LOCAL,
 };
