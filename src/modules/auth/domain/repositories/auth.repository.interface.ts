@@ -1,5 +1,6 @@
-import { User } from '@prisma/client';
+import { User } from '../../../users/domain/entities/user.entity';
 import { Provider } from '@prisma/client';
+import { RefreshToken } from '../entities/refresh-token.entity';
 
 export interface IAuthRepository {
   findUserByEmail(email: string): Promise<User | null>;
@@ -15,11 +16,6 @@ export interface IAuthRepository {
     token: string,
     expiresAt: Date,
   ): Promise<void>;
-  findRefreshToken(token: string): Promise<{
-    token: string;
-    userId: number;
-    expiresAt: Date;
-    user: User;
-  } | null>;
+  findRefreshToken(token: string): Promise<RefreshToken | null>;
   deleteRefreshToken(token: string): Promise<void>;
 }
