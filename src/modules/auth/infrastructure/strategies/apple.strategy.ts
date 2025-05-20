@@ -3,8 +3,8 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-apple';
 import { env } from '../../../../config/env.config';
 import { Provider } from '@prisma/client';
-import { OAuthLoginDto } from '../../infrastructure/dto/oauth-login.dto';
-import { ValidateOAuthUserUseCase } from '../../application/use-cases';
+import { OAuthLoginDto } from '../../application/dtos/oauth-login.dto';
+import { ValidateOAuthUserUseCase } from '../../application/use-cases/validate-oauth-user.use-case';
 
 // Define interface for Apple profile
 interface AppleProfile {
