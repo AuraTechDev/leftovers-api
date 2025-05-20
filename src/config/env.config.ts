@@ -33,7 +33,7 @@ const envSchema = z.object({
 
   // Resend
   RESEND_API_KEY: z.string().min(1),
-  RESEND_API_URL: z.string().url().default('https://api.resend.com/emails'),
+  RESEND_FROM_EMAIL: z.string().email().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -1,49 +1,75 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { BusinessInvitation } from '../../domain/entities/business-invitation.entity';
 import { env } from '../../../../config/env.config';
+import { IEmailSender } from '../../../resend/domain/interfaces/email-sender.interface';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
 
+  constructor(
+    @Inject('IEmailSender')
+    private readonly emailSender: IEmailSender,
+  ) {}
+
+  private async sendTemplatedEmail(params: {
+    to: string;
+    businessName: string;
+    inviteLink: string;
+    expiresAtStr: string;
+    isReminder?: boolean;
+  }) {
+    const { to, businessName, inviteLink, expiresAtStr, isReminder } = params;
+    const subject = isReminder
+      ? `Reminder: Join ${businessName} on Leftovers`
+      : `Join ${businessName} on Leftovers`;
+
+    await this.emailSender.sendEmail({
+      to,
+      subject,
+      html: `
+        <h1>${isReminder ? 'Reminder: ' : ''}Join ${businessName} on Leftovers</h1>
+        <p>You have been invited to join ${businessName} on Leftovers.</p>
+        <p><a href="${inviteLink}">Click here to accept the invitation</a></p>
+        <p>This invitation expires on ${new Date(expiresAtStr).toLocaleDateString()}</p>
+      `,
+    });
+
+    this.logger
+      .log(`${isReminder ? 'Reminder email' : 'Invitation email'} sent to: ${to}
+        Business: ${businessName}
+        Invitation Link: ${inviteLink}
+        Expires: ${expiresAtStr}`);
+  }
+
   async sendInvitationEmail(
     invitation: BusinessInvitation,
     businessName: string,
   ): Promise<void> {
-    // TODO: Replace with real email service implementation (SendGrid, Mailgun, etc.)
-    // For now, we'll just log the email details
-
     const inviteLink = `${env.FRONTEND_URL}/invite/accept?token=${invitation.token}`;
     const expiresAtStr = invitation.expiresAt.toISOString();
 
-    // Adding an artificial delay to satisfy the linter's requirement for an await expression
-    await new Promise((resolve) => setTimeout(resolve, 1));
-
-    this.logger.log(`
-      Sending invitation email to: ${invitation.email}
-      Business: ${businessName}
-      Invitation Link: ${inviteLink}
-      Expires: ${expiresAtStr}
-    `);
+    await this.sendTemplatedEmail({
+      to: invitation.email,
+      businessName,
+      inviteLink,
+      expiresAtStr,
+    });
   }
 
   async sendReminderEmail(
     invitation: BusinessInvitation,
     businessName: string,
   ): Promise<void> {
-    // TODO: Replace with real email service implementation (SendGrid, Mailgun, etc.)
-    // For now, we'll just log the email details
     const inviteLink = `${env.FRONTEND_URL}/invite/accept?token=${invitation.token}`;
     const expiresAtStr = invitation.expiresAt.toISOString();
 
-    // Adding an artificial delay to satisfy the linter's requirement for an await expression
-    await new Promise((resolve) => setTimeout(resolve, 1));
-
-    this.logger.log(`
-      Sending reminder email to: ${invitation.email}
-      Business: ${businessName}
-      Invitation Link: ${inviteLink}
-      Expires: ${expiresAtStr}
-    `);
+    await this.sendTemplatedEmail({
+      to: invitation.email,
+      businessName,
+      inviteLink,
+      expiresAtStr,
+      isReminder: true,
+    });
   }
 }

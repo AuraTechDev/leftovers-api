@@ -1,9 +1,12 @@
 export interface IEmailSender {
-  sendEmail(options: {
-    to: string;
+  sendEmail(params: {
+    to: string | string[];
     subject: string;
     html: string;
-    text?: string;
     from?: string;
+    text?: string;
+    replyTo?: string;
+    cc?: string[];
+    bcc?: string[];
   }): Promise<void>;
-} 
+}
