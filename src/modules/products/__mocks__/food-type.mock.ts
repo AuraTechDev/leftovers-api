@@ -1,4 +1,5 @@
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { FoodType } from '@prisma/client';
 
 // Mock for FoodType entity
 export interface MockFoodType {
@@ -31,16 +32,14 @@ export const createMockUpdateFoodTypeDto = (name = 'Updated Vegetarian') => ({
 
 // Mock for FoodTypeResponseDto
 export const createMockFoodTypeResponseDto = (
-  override: Partial<MockFoodType> = {},
-) => {
-  const foodType = createMockFoodType(override);
-  return {
-    id: foodType.id,
-    name: foodType.name,
-    createdAt: foodType.createdAt,
-    updatedAt: foodType.updatedAt,
-  };
-};
+  overrides: Partial<FoodType> = {},
+): FoodType => ({
+  id: 1,
+  name: 'Test Food Type',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  ...overrides,
+});
 
 // Mock for FoodTypesRepository
 export const createMockFoodTypesRepository = () => ({
@@ -75,3 +74,23 @@ export const createPrismaForeignKeyConstraintError = (
     },
   });
 };
+
+export const createMockFoodTypesArray = (): FoodType[] => [
+  createMockFoodTypeResponseDto({ id: 1, name: 'Food Type 1' }),
+  createMockFoodTypeResponseDto({ id: 2, name: 'Food Type 2' }),
+];
+
+export const createMockFoodTypeUseCases = () => ({
+  createFoodTypeUseCase: {
+    execute: jest.fn(),
+  },
+  getAllFoodTypesUseCase: {
+    execute: jest.fn(),
+  },
+  updateFoodTypeUseCase: {
+    execute: jest.fn(),
+  },
+  deleteFoodTypeUseCase: {
+    execute: jest.fn(),
+  },
+});

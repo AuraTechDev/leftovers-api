@@ -38,20 +38,12 @@ import { DeleteProductUseCase } from '../../application/use-cases/delete-product
 import { UploadProductImageUseCase } from '../../application/use-cases/upload-product-image.use-case';
 import { ToggleProductPropertyUseCase } from '../../application/use-cases/toggle-product-property.use-case';
 
-// Food Types Use Cases
-import { CreateFoodTypeUseCase } from '../../application/use-cases/create-food-type.use-case';
-import { GetAllFoodTypesUseCase } from '../../application/use-cases/get-all-food-types.use-case';
-import { UpdateFoodTypeUseCase } from '../../application/use-cases/update-food-type.use-case';
-import { DeleteFoodTypeUseCase } from '../../application/use-cases/delete-food-type.use-case';
-
 // DTOs
 import { CreateProductDto } from '../../application/dtos/create-product.dto';
 import { UpdateProductDto } from '../../application/dtos/update-product.dto';
 import { ProductResponseDto } from '../../application/dtos/product-response.dto';
-import { CreateFoodTypeDto } from '../../application/dtos/create-food-type.dto';
-import { UpdateFoodTypeDto } from '../../application/dtos/update-food-type.dto';
 
-@Controller()
+@Controller('products')
 export class ProductsController {
   constructor(
     // Product use cases
@@ -62,12 +54,6 @@ export class ProductsController {
     private readonly deleteProductUseCase: DeleteProductUseCase,
     private readonly uploadProductImageUseCase: UploadProductImageUseCase,
     private readonly toggleProductPropertyUseCase: ToggleProductPropertyUseCase,
-
-    // Food type use cases
-    private readonly createFoodTypeUseCase: CreateFoodTypeUseCase,
-    private readonly getAllFoodTypesUseCase: GetAllFoodTypesUseCase,
-    private readonly updateFoodTypeUseCase: UpdateFoodTypeUseCase,
-    private readonly deleteFoodTypeUseCase: DeleteFoodTypeUseCase,
 
     // Repositories for authorization
     private readonly usersRepository: UsersRepository,
@@ -99,9 +85,7 @@ export class ProductsController {
     }
   }
 
-  /* ========= PRODUCT ENDPOINTS ========= */
-
-  @Post('products')
+  @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
   async createProduct(
@@ -120,7 +104,7 @@ export class ProductsController {
     return this.createProductUseCase.execute(createProductDto);
   }
 
-  @Get('products')
+  @Get()
   @UseGuards(JwtAuthGuard)
   async getAllProducts(
     @Query('businessId') businessId?: string,
@@ -129,7 +113,7 @@ export class ProductsController {
     return this.getAllProductsUseCase.execute(parsedBusinessId);
   }
 
-  @Get('products/:id')
+  @Get(':id')
   @UseGuards(JwtAuthGuard)
   async getProductById(
     @Param('id', ParseIntPipe) id: number,
@@ -137,7 +121,7 @@ export class ProductsController {
     return this.getProductUseCase.execute(id);
   }
 
-  @Put('products/:id')
+  @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
   async updateProduct(
@@ -160,7 +144,7 @@ export class ProductsController {
     return this.updateProductUseCase.execute(id, updateProductDto);
   }
 
-  @Delete('products/:id')
+  @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -183,7 +167,7 @@ export class ProductsController {
     await this.deleteProductUseCase.execute(id);
   }
 
-  @Post('products/:id/image')
+  @Post(':id/image')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
   @UseInterceptors(FileInterceptor('file', imageUploadOptions))
@@ -211,7 +195,7 @@ export class ProductsController {
     return this.uploadProductImageUseCase.execute(id, file.buffer);
   }
 
-  @Patch('products/:id/feature')
+  @Patch(':id/feature')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
   async toggleProductFeature(
@@ -233,7 +217,7 @@ export class ProductsController {
     return this.toggleProductPropertyUseCase.execute(id, 'isFeatured');
   }
 
-  @Patch('products/:id/disable')
+  @Patch(':id/disable')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPER_ADMIN, Role.BUSINESS)
   async toggleProductDisable(
@@ -253,38 +237,5 @@ export class ProductsController {
     }
 
     return this.toggleProductPropertyUseCase.execute(id, 'isDisabled');
-  }
-
-  /* ========= FOOD TYPE ENDPOINTS ========= */
-
-  @Post('food-types')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.SUPER_ADMIN)
-  async createFoodType(@Body() createFoodTypeDto: CreateFoodTypeDto) {
-    return this.createFoodTypeUseCase.execute(createFoodTypeDto);
-  }
-
-  @Get('food-types')
-  @UseGuards(JwtAuthGuard)
-  async getAllFoodTypes() {
-    return this.getAllFoodTypesUseCase.execute();
-  }
-
-  @Put('food-types/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.SUPER_ADMIN)
-  async updateFoodType(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateFoodTypeDto: UpdateFoodTypeDto,
-  ) {
-    return this.updateFoodTypeUseCase.execute(id, updateFoodTypeDto);
-  }
-
-  @Delete('food-types/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.SUPER_ADMIN)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteFoodType(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    await this.deleteFoodTypeUseCase.execute(id);
   }
 }

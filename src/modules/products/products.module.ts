@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ProductsController } from './infrastructure/controllers/products.controller';
 import { ProductRatingsController } from './infrastructure/controllers/product-ratings.controller';
+import { FoodTypesController } from './infrastructure/controllers/food-types.controller';
 import { ProductsRepository } from './infrastructure/repositories/products.repository';
 import { ProductRatingsRepository } from './infrastructure/repositories/product-ratings.repository';
 import { CreateProductUseCase } from './application/use-cases/create-product.use-case';
@@ -24,7 +25,11 @@ import { ProductInventoryService } from './application/services/product-inventor
 
 @Module({
   imports: [PrismaModule, UsersModule, CloudinaryModule, BusinessModule],
-  controllers: [ProductsController, ProductRatingsController],
+  controllers: [
+    ProductsController,
+    ProductRatingsController,
+    FoodTypesController,
+  ],
   providers: [
     // Product repositories
     ProductsRepository,

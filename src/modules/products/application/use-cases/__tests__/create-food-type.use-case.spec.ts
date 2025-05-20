@@ -3,7 +3,6 @@ import { CreateFoodTypeUseCase } from '../create-food-type.use-case';
 import { FoodTypesRepository } from '../../../infrastructure/repositories/food-types.repository';
 import { ConflictException } from '@nestjs/common';
 import {
-  createMockFoodType,
   createMockFoodTypeDto,
   createMockFoodTypeResponseDto,
   createMockFoodTypesRepository,
@@ -46,8 +45,7 @@ describe('CreateFoodTypeUseCase', () => {
     it('should create a new food type successfully', async () => {
       // Arrange
       const dto = createMockFoodTypeDto();
-      const createdFoodType = createMockFoodType();
-      const expectedResponse = createMockFoodTypeResponseDto();
+      const createdFoodType = createMockFoodTypeResponseDto({ name: dto.name });
 
       mockFoodTypesRepository.create.mockResolvedValue(createdFoodType);
 
@@ -60,7 +58,7 @@ describe('CreateFoodTypeUseCase', () => {
           name: dto.name,
         }),
       );
-      expect(result).toEqual(expectedResponse);
+      expect(result).toEqual(createdFoodType);
     });
 
     it('should throw ConflictException when food type with same name already exists', async () => {
