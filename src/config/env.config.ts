@@ -27,6 +27,13 @@ const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string(),
   CLOUDINARY_API_KEY: z.string(),
   CLOUDINARY_API_SECRET: z.string(),
+
+  // Frontend URL
+  FRONTEND_URL: z.string().url(),
+
+  // Resend
+  RESEND_API_KEY: z.string().min(1),
+  RESEND_FROM_EMAIL: z.string().email().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

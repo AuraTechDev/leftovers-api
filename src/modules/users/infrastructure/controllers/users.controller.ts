@@ -26,7 +26,6 @@ import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard';
 import { Roles } from '../../../auth/infrastructure/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { GetUser } from '../../../auth/infrastructure/decorators/get-user.decorator';
-import { AuthUser } from '../../../auth/domain/interfaces/user.interface';
 
 @Controller('users')
 export class UsersController {
@@ -44,9 +43,9 @@ export class UsersController {
   @HttpCode(HttpStatus.CREATED)
   async createUser(
     @Body() userData: CreateUserDto,
-    @GetUser() currentUser: AuthUser,
+    @GetUser('role') role: Role,
   ): Promise<UserResponseDto> {
-    return this.createUserUseCase.execute(userData, currentUser.role);
+    return this.createUserUseCase.execute(userData, role);
   }
 
   @Get()
@@ -69,9 +68,9 @@ export class UsersController {
   async updateUser(
     @Param('id', ParseIntPipe) id: number,
     @Body() userData: UpdateUserDto,
-    @GetUser() currentUser: AuthUser,
+    @GetUser('role') role: Role,
   ): Promise<UserResponseDto> {
-    return this.updateUserUseCase.execute(id, userData, currentUser.role);
+    return this.updateUserUseCase.execute(id, userData, role);
   }
 
   @Delete(':id')

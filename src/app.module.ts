@@ -8,6 +8,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { RatingsModule } from './modules/ratings/ratings.module';
 import { DiscoverModule } from './modules/discover/discover.module';
+import { InvitationsModule } from './modules/invitations/invitations.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { DiscoverModule } from './modules/discover/discover.module';
     OrdersModule,
     RatingsModule,
     DiscoverModule,
+    InvitationsModule,
   ],
   controllers: [],
   providers: [],
