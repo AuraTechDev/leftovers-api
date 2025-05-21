@@ -6,7 +6,8 @@ import { AuthUser } from '../domain/interfaces/user.interface';
 import { AuthResponseDto } from '../application/dtos/auth-response.dto';
 import { UserDto } from '../application/dtos/auth-response.dto';
 
-export const mockUser: User = {
+// Base mocks
+export const baseUser: User = {
   id: 1,
   name: 'Test User',
   email: 'test@example.com',
@@ -20,11 +21,33 @@ export const mockUser: User = {
   updatedAt: new Date(),
 };
 
-export const mockGoogleUser = {
-  ...mockUser,
+export const baseOAuthUser: User = {
+  ...baseUser,
   provider: Provider.GOOGLE,
   providerId: 'google-123',
+  photoUrl: 'https://example.com/photo.jpg',
 };
+
+export const baseAuthResponse: AuthResponseDto = {
+  user: {
+    id: baseUser.id,
+    email: baseUser.email,
+    name: baseUser.name,
+    role: baseUser.role,
+    photoUrl: baseUser.photoUrl,
+    provider: baseUser.provider,
+    businessId: undefined,
+  },
+  accessToken: 'test-token',
+  refreshToken: 'test-refresh-token',
+};
+
+// Derived mocks
+export const mockUser = baseUser;
+export const mockLocalUser = baseUser;
+export const mockCreatedUser = baseUser;
+
+export const mockGoogleUser = baseOAuthUser;
 
 export const mockRefreshToken = {
   token: 'refresh-token',
@@ -54,46 +77,24 @@ export const mockRegisterDto: RegisterDto = {
   password: 'password123',
 };
 
-export const mockCreatedUser: User = {
-  id: 1,
-  name: 'Test User',
-  email: 'test@example.com',
-  password: 'hashed-password',
-  role: Role.USER,
-  provider: Provider.LOCAL,
-  providerId: undefined,
-  photoUrl: undefined,
-  businessId: undefined,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
 export const mockExistingUser: User = {
-  id: 1,
-  name: 'Existing User',
+  ...baseUser,
   email: 'existing@example.com',
-  password: 'hashed-password',
-  role: Role.USER,
-  provider: Provider.LOCAL,
-  providerId: undefined,
-  photoUrl: undefined,
-  businessId: undefined,
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  name: 'Existing User',
 };
 
 // Mocks for refresh tokens use case tests
 export const mockValidRefreshToken = {
   token: 'valid-refresh-token',
   userId: 1,
-  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Un día en el futuro
+  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
   user: mockUser,
 };
 
 export const mockExpiredRefreshToken = {
   token: 'expired-refresh-token',
   userId: 1,
-  expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // Un día en el pasado
+  expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
   user: mockUser,
 };
 
@@ -104,17 +105,8 @@ export const mockUpdateProfileDto = {
 };
 
 export const mockOriginalUser: User = {
-  id: 1,
+  ...baseUser,
   name: 'Original Name',
-  email: 'test@example.com',
-  password: 'hashed-password',
-  role: Role.USER,
-  provider: Provider.LOCAL,
-  providerId: undefined,
-  photoUrl: undefined,
-  businessId: undefined,
-  createdAt: new Date(),
-  updatedAt: new Date(),
 };
 
 export const mockUpdatedUser: User = {
@@ -124,31 +116,16 @@ export const mockUpdatedUser: User = {
 };
 
 export const mockExistingUserForUpdateProfile: User = {
+  ...baseUser,
   id: 2,
   name: 'Another User',
   email: 'existing@example.com',
-  password: 'hashed-password',
-  role: Role.USER,
-  provider: Provider.LOCAL,
-  providerId: undefined,
-  photoUrl: undefined,
-  businessId: undefined,
-  createdAt: new Date(),
-  updatedAt: new Date(),
 };
 
 export const mockCurrentUser: User = {
-  id: 1,
+  ...baseUser,
   name: 'Current User',
   email: 'current@example.com',
-  password: 'hashed-password',
-  role: Role.USER,
-  provider: Provider.LOCAL,
-  providerId: undefined,
-  photoUrl: undefined,
-  businessId: undefined,
-  createdAt: new Date(),
-  updatedAt: new Date(),
 };
 
 export const mockUpdatedCurrentUser: User = {
@@ -165,96 +142,34 @@ export const mockOAuthData: OAuthLoginDto = {
   photoUrl: 'https://example.com/photo.jpg',
 };
 
-export const mockOAuthUser: User = {
-  id: 1,
-  name: 'Test User',
-  email: 'test@example.com',
-  password: undefined,
-  role: Role.USER,
-  provider: Provider.GOOGLE,
-  providerId: 'google-123',
-  photoUrl: 'https://example.com/photo.jpg',
-  businessId: undefined,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+export const mockOAuthUser = baseOAuthUser;
 
 export const mockOAuthExistingUser: User = {
-  ...mockOAuthUser,
+  ...baseOAuthUser,
   name: 'Old Name',
   photoUrl: 'https://example.com/old-photo.jpg',
 };
 
-export const mockOAuthUpdatedUser: User = {
-  ...mockOAuthUser,
-};
+export const mockOAuthUpdatedUser = baseOAuthUser;
 
 // Mocks for validate-user use case tests
-export const mockLocalUser: User = {
-  id: 1,
-  name: 'Test User',
-  email: 'test@example.com',
-  password: 'hashed-password',
-  role: Role.USER,
-  provider: Provider.LOCAL,
-  providerId: undefined,
-  photoUrl: undefined,
-  businessId: undefined,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
 export const mockGoogleUserForValidate: User = {
-  id: 1,
-  name: 'Test User',
-  email: 'test@example.com',
-  password: 'hashed-password',
-  role: Role.USER,
-  provider: Provider.GOOGLE,
+  ...baseOAuthUser,
   providerId: 'google-id',
-  photoUrl: undefined,
-  businessId: undefined,
-  createdAt: new Date(),
-  updatedAt: new Date(),
 };
 
 // Mocks for auth controller tests
 export const mockAuthUser: AuthUser = {
-  id: 1,
-  email: 'test@example.com',
-  name: 'Test User',
-  role: Role.USER,
-  provider: Provider.LOCAL,
+  id: baseUser.id,
+  email: baseUser.email,
+  name: baseUser.name,
+  role: baseUser.role,
+  provider: baseUser.provider,
   photoUrl: 'test-photo-url',
 };
 
-export const mockRegisterResponse: AuthResponseDto = {
-  user: {
-    id: mockAuthUser.id,
-    email: mockAuthUser.email,
-    name: mockAuthUser.name,
-    role: mockAuthUser.role,
-    photoUrl: mockAuthUser.photoUrl,
-    provider: mockAuthUser.provider,
-    businessId: undefined,
-  },
-  accessToken: 'test-token',
-  refreshToken: 'test-refresh-token',
-};
-
-export const mockLoginResponse: AuthResponseDto = {
-  user: {
-    id: mockAuthUser.id,
-    email: mockAuthUser.email,
-    name: mockAuthUser.name,
-    role: mockAuthUser.role,
-    photoUrl: mockAuthUser.photoUrl,
-    provider: mockAuthUser.provider,
-    businessId: undefined,
-  },
-  accessToken: 'test-token',
-  refreshToken: 'test-refresh-token',
-};
+export const mockRegisterResponse = baseAuthResponse;
+export const mockLoginResponse = baseAuthResponse;
 
 export const mockRefreshResponse = {
   accessToken: 'new-test-token',
