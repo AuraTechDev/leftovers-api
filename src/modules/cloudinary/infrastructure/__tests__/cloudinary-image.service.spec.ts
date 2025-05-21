@@ -14,7 +14,7 @@ interface TestEntity {
 }
 
 // Mock environment configuration
-jest.mock('../../../config/env.config', () => ({
+jest.mock('../../../../config/env.config', () => ({
   env: {
     CLOUDINARY_CLOUD_NAME: 'test-cloud',
     CLOUDINARY_API_KEY: 'test-key',

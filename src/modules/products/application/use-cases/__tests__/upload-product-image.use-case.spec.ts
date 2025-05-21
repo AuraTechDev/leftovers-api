@@ -17,7 +17,9 @@ jest.mock('../../../../cloudinary/constants/cloudinary-folders', () => ({
 }));
 
 // Mock CloudinaryImageService directly
-jest.mock('../../../../cloudinary/cloudinary-image.service');
+jest.mock(
+  '../../../../cloudinary/infrastructure/services/cloudinary-image.service',
+);
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';

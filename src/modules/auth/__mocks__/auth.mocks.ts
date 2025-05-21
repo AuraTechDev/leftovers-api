@@ -2,6 +2,9 @@ import { Provider, Role } from '@prisma/client';
 import { User } from '../../users/domain/entities/user.entity';
 import { RegisterDto } from '../application/dtos/register.dto';
 import { OAuthLoginDto } from '../application/dtos/oauth-login.dto';
+import { AuthUser } from '../domain/interfaces/user.interface';
+import { AuthResponseDto } from '../application/dtos/auth-response.dto';
+import { UserDto } from '../application/dtos/auth-response.dto';
 
 export const mockUser: User = {
   id: 1,
@@ -214,3 +217,62 @@ export const mockGoogleUserForValidate: User = {
   createdAt: new Date(),
   updatedAt: new Date(),
 };
+
+// Mocks for auth controller tests
+export const mockAuthUser: AuthUser = {
+  id: 1,
+  email: 'test@example.com',
+  name: 'Test User',
+  role: Role.USER,
+  provider: Provider.LOCAL,
+  photoUrl: 'test-photo-url',
+};
+
+export const mockRegisterResponse: AuthResponseDto = {
+  user: {
+    id: mockAuthUser.id,
+    email: mockAuthUser.email,
+    name: mockAuthUser.name,
+    role: mockAuthUser.role,
+    photoUrl: mockAuthUser.photoUrl,
+    provider: mockAuthUser.provider,
+    businessId: undefined,
+  },
+  accessToken: 'test-token',
+  refreshToken: 'test-refresh-token',
+};
+
+export const mockLoginResponse: AuthResponseDto = {
+  user: {
+    id: mockAuthUser.id,
+    email: mockAuthUser.email,
+    name: mockAuthUser.name,
+    role: mockAuthUser.role,
+    photoUrl: mockAuthUser.photoUrl,
+    provider: mockAuthUser.provider,
+    businessId: undefined,
+  },
+  accessToken: 'test-token',
+  refreshToken: 'test-refresh-token',
+};
+
+export const mockRefreshResponse = {
+  accessToken: 'new-test-token',
+  refreshToken: 'new-test-refresh-token',
+};
+
+export const mockUpdatedUserDto: UserDto = {
+  id: mockAuthUser.id,
+  name: 'Updated Name',
+  email: 'updated@example.com',
+  photoUrl: 'https://updated-photo-url.com',
+  role: mockAuthUser.role,
+  provider: mockAuthUser.provider,
+  businessId: undefined,
+};
+
+// Mocks for controller guard tests
+export const mockJwtAuthGuard = { canActivate: jest.fn() };
+export const mockGoogleAuthGuard = { canActivate: jest.fn() };
+export const mockAppleAuthGuard = { canActivate: jest.fn() };
+export const mockRolesGuard = { canActivate: jest.fn() };
