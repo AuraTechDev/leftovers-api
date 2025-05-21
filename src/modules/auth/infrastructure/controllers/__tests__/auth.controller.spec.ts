@@ -1,24 +1,26 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
-import { Role, Provider } from '@prisma/client';
 import { AuthController } from '../../controllers/auth.controller';
 import { AuthUser } from '../../../domain/interfaces/user.interface';
-import { RegisterDto } from '../../dto/register.dto';
-import { RefreshTokenDto } from '../../dto/refresh-token.dto';
-import { UpdateProfileDto } from '../../dto/update-profile.dto';
-import { ChangePasswordDto } from '../../dto/change-password.dto';
+import { RegisterDto } from '../../../application/dtos/register.dto';
+import { RefreshTokenDto } from '../../../application/dtos/refresh-token.dto';
+import { UpdateProfileDto } from '../../../application/dtos/update-profile.dto';
+import { ChangePasswordDto } from '../../../application/dtos/change-password.dto';
+import { LoginUseCase } from '../../../application/use-cases/login.use-case';
+import { RegisterUseCase } from '../../../application/use-cases/register.use-case';
+import { RefreshTokensUseCase } from '../../../application/use-cases/refresh-tokens.use-case';
+import { LogoutUseCase } from '../../../application/use-cases/logout.use-case';
+import { OAuthLoginUseCase } from '../../../application/use-cases/oauth-login.use-case';
+import { UpdateProfileUseCase } from '../../../application/use-cases/update-profile.use-case';
+import { ChangePasswordUseCase } from '../../../application/use-cases/change-password.use-case';
+import { UserDto } from '../../../application/dtos/auth-response.dto';
 import {
-  LoginUseCase,
-  RegisterUseCase,
-  RefreshTokensUseCase,
-  LogoutUseCase,
-  OAuthLoginUseCase,
-  UpdateProfileUseCase,
-  ChangePasswordUseCase,
-} from '../../../application/use-cases';
-import {
-  AuthResponseDto,
-  UserDto,
-} from '../../../application/dtos/auth-response.dto';
+  mockAuthUser,
+  mockRegisterResponse,
+  mockLoginResponse,
+  mockRefreshResponse,
+  mockUpdatedUserDto,
+} from '../../../__mocks__/auth.mocks';
 
 // Create RequestWithUser interface
 interface RequestWithUser extends Request {
@@ -35,49 +37,7 @@ describe('AuthController', () => {
   let updateProfileUseCase: jest.Mocked<UpdateProfileUseCase>;
   let changePasswordUseCase: jest.Mocked<ChangePasswordUseCase>;
 
-  const mockUser: AuthUser = {
-    id: 1,
-    email: 'test@example.com',
-    name: 'Test User',
-    role: Role.USER,
-    provider: Provider.LOCAL,
-    photoUrl: 'test-photo-url',
-  };
-
-  // For register responses where Prisma model expects string | null
-  const mockRegisterResponse: AuthResponseDto = {
-    user: {
-      id: mockUser.id,
-      email: mockUser.email,
-      name: mockUser.name,
-      role: mockUser.role,
-      photoUrl: mockUser.photoUrl,
-      provider: mockUser.provider,
-      businessId: undefined,
-    },
-    accessToken: 'test-token',
-    refreshToken: 'test-refresh-token',
-  };
-
-  // Create a mock login response that matches expected type
-  const mockLoginResponse: AuthResponseDto = {
-    user: {
-      id: mockUser.id,
-      email: mockUser.email,
-      name: mockUser.name,
-      role: mockUser.role,
-      photoUrl: mockUser.photoUrl,
-      provider: mockUser.provider,
-      businessId: undefined,
-    },
-    accessToken: 'test-token',
-    refreshToken: 'test-refresh-token',
-  };
-
-  const mockRefreshResponse = {
-    accessToken: 'new-test-token',
-    refreshToken: 'new-test-refresh-token',
-  };
+  const mockUser: AuthUser = mockAuthUser;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -154,7 +114,6 @@ describe('AuthController', () => {
 
       const result = await controller.register(registerDto);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(registerUseCase.execute).toHaveBeenCalledWith(registerDto);
       expect(result).toEqual(mockRegisterResponse);
     });
@@ -168,7 +127,6 @@ describe('AuthController', () => {
 
       const result = await controller.login(req.user);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(loginUseCase.execute).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);
     });
@@ -184,7 +142,6 @@ describe('AuthController', () => {
 
       const result = await controller.refreshTokens(refreshTokenDto);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(refreshTokensUseCase.execute).toHaveBeenCalledWith(
         refreshTokenDto.refreshToken,
       );
@@ -202,7 +159,6 @@ describe('AuthController', () => {
 
       const result = await controller.logout(refreshTokenDto);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(logoutUseCase.execute).toHaveBeenCalledWith(
         refreshTokenDto.refreshToken,
       );
@@ -248,7 +204,6 @@ describe('AuthController', () => {
 
       const result = await controller.googleAuthCallback(req.user);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(oauthLoginUseCase.execute).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);
     });
@@ -260,7 +215,6 @@ describe('AuthController', () => {
 
       const result = await controller.appleAuthCallback(req.user);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(oauthLoginUseCase.execute).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual(mockLoginResponse);
     });
@@ -275,15 +229,7 @@ describe('AuthController', () => {
       };
 
       // Mocked response from service with required User properties
-      const updatedUser: UserDto = {
-        id: mockUser.id,
-        name: updateProfileDto.name!,
-        email: updateProfileDto.email!,
-        photoUrl: updateProfileDto.photoUrl,
-        role: mockUser.role,
-        provider: mockUser.provider,
-        businessId: undefined,
-      };
+      const updatedUser: UserDto = mockUpdatedUserDto;
 
       updateProfileUseCase.execute.mockResolvedValue(updatedUser);
 
@@ -292,7 +238,6 @@ describe('AuthController', () => {
         updateProfileDto,
       );
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(updateProfileUseCase.execute).toHaveBeenCalledWith(
         mockUser.id,
         updateProfileDto,
@@ -315,7 +260,6 @@ describe('AuthController', () => {
         changePasswordDto,
       );
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(changePasswordUseCase.execute).toHaveBeenCalledWith(
         mockUser.id,
         changePasswordDto,
