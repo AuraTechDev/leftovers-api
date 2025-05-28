@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { TokensResponseDto } from '../dtos/auth-response.dto';
 import { env } from '../../../../config/env.config';
 import { JwtPayload } from '../../domain/interfaces/jwt-payload.interface';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class RefreshTokensUseCase {
@@ -28,6 +29,7 @@ export class RefreshTokensUseCase {
         email: payload.email,
         role: payload.role,
         type: 'refresh',
+        jti: randomUUID(),
       };
 
       const [accessToken, newRefreshToken] = await Promise.all([

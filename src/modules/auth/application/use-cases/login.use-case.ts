@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthResponseDto, UserDto } from '../dtos/auth-response.dto';
 import { AuthUser } from '../../domain/interfaces/user.interface';
 import { env } from '../../../../config/env.config';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class LoginUseCase {
@@ -21,6 +22,7 @@ export class LoginUseCase {
       email: user.email,
       role: user.role,
       type: 'refresh',
+      jti: randomUUID(),
     };
 
     const userDto: UserDto = {
