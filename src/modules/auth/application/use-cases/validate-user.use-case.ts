@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AuthRepository } from '../../infrastructure/repositories/auth.repository';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { Provider } from '@prisma/client';
 import { AuthUser } from '../../domain/interfaces/user.interface';
 

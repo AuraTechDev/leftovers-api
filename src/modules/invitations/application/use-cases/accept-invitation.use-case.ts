@@ -6,7 +6,7 @@ import {
 import { InvitationsRepository } from '../../infrastructure/repositories/invitations.repository';
 import { AcceptInvitationDto } from '../../infrastructure/dto/accept-invitation.dto';
 import { PrismaService } from '../../../prisma/prisma.service';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { Provider, Role } from '@prisma/client';
 import { BusinessInvitationStatus } from '@prisma/client';
 

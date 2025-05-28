@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { AuthRepository } from '../../infrastructure/repositories/auth.repository';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ChangePasswordUseCase {
