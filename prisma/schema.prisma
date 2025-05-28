@@ -14,31 +14,20 @@ datasource db {
 }
 
 model User {
-  id            Int            @id @default(autoincrement())
-  email         String         @unique
-  name          String
-  password      String? // Nullable because OAuth users won't have a password
-  photoUrl      String? // Profile picture URL for OAuth users
-  role          Role           @default(USER)
-  provider      Provider       @default(LOCAL)
-  providerId    String? // External ID for OAuth users
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  refreshTokens RefreshToken[]
-  Business      Business?      @relation(fields: [businessId], references: [id])
-  businessId    Int?
-  Order         Order[]
-  ratings       Rating[]
-}
-
-model RefreshToken {
-  id        Int      @id @default(autoincrement())
-  token     String   @unique
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int       @id @default(autoincrement())
+  email      String    @unique
+  name       String
+  password   String? // Nullable because OAuth users won't have a password
+  photoUrl   String? // Profile picture URL for OAuth users
+  role       Role      @default(USER)
+  provider   Provider  @default(LOCAL)
+  providerId String? // External ID for OAuth users
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  Business   Business? @relation(fields: [businessId], references: [id])
+  businessId Int?
+  Order      Order[]
+  ratings    Rating[]
 }
 
 model Business {

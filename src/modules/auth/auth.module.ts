@@ -15,7 +15,6 @@ import { AuthRepository } from './infrastructure/repositories/auth.repository';
 import { LoginUseCase } from './application/use-cases/login.use-case';
 import { RegisterUseCase } from './application/use-cases/register.use-case';
 import { RefreshTokensUseCase } from './application/use-cases/refresh-tokens.use-case';
-import { LogoutUseCase } from './application/use-cases/logout.use-case';
 import { ValidateUserUseCase } from './application/use-cases/validate-user.use-case';
 import { OAuthLoginUseCase } from './application/use-cases/oauth-login.use-case';
 import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case';
@@ -29,7 +28,9 @@ import { ValidateOAuthUserUseCase } from './application/use-cases/validate-oauth
     PrismaModule,
     JwtModule.register({
       secret: env.JWT_SECRET,
-      signOptions: { expiresIn: env.JWT_EXPIRES_IN },
+      signOptions: {
+        expiresIn: env.JWT_EXPIRATION_TIME,
+      },
     }),
   ],
   controllers: [AuthController],
@@ -38,7 +39,6 @@ import { ValidateOAuthUserUseCase } from './application/use-cases/validate-oauth
     LoginUseCase,
     RegisterUseCase,
     RefreshTokensUseCase,
-    LogoutUseCase,
     ValidateUserUseCase,
     OAuthLoginUseCase,
     UpdateProfileUseCase,

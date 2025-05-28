@@ -4,8 +4,8 @@ import { AuthRepository } from '../../infrastructure/repositories/auth.repositor
 import { RegisterDto } from '../dtos/register.dto';
 import { AuthResponseDto, UserDto } from '../dtos/auth-response.dto';
 import * as bcrypt from 'bcryptjs';
-import { randomBytes } from 'crypto';
 import { Provider, Role } from '@prisma/client';
+import { env } from '../../../../config/env.config';
 
 @Injectable()
 export class RegisterUseCase {
@@ -32,21 +32,19 @@ export class RegisterUseCase {
       provider: Provider.LOCAL,
     });
 
-    const payload = {
+    const accessTokenPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
+      type: 'access',
     };
 
-    const refreshToken = this.generateRefreshToken();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await this.authRepository.createRefreshToken(
-      user.id,
-      refreshToken,
-      expiresAt,
-    );
+    const refreshTokenPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      type: 'refresh',
+    };
 
     const userDto: UserDto = {
       id: user.id,
@@ -58,14 +56,15 @@ export class RegisterUseCase {
       businessId: user.businessId || undefined,
     };
 
-    return AuthResponseDto.create(
-      userDto,
-      this.jwtService.sign(payload),
-      refreshToken,
-    );
-  }
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(accessTokenPayload, {
+        expiresIn: env.JWT_EXPIRATION_TIME,
+      }),
+      this.jwtService.signAsync(refreshTokenPayload, {
+        expiresIn: env.JWT_REFRESH_EXPIRATION_TIME,
+      }),
+    ]);
 
-  private generateRefreshToken(): string {
-    return randomBytes(40).toString('hex');
+    return AuthResponseDto.create(userDto, accessToken, refreshToken);
   }
 }

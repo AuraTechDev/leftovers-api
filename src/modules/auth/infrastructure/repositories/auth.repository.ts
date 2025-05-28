@@ -1,17 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import {
-  Provider,
-  User as PrismaUser,
-  RefreshToken as PrismaRefreshToken,
-} from '@prisma/client';
+import { Provider, User as PrismaUser } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { IAuthRepository } from '../../domain/repositories/auth.repository.interface';
 import { User } from '../../../users/domain/entities/user.entity';
-import { RefreshToken } from '../../domain/entities/refresh-token.entity';
-
-type RefreshTokenWithUser = PrismaRefreshToken & {
-  user: PrismaUser;
-};
 
 @Injectable()
 export class AuthRepository implements IAuthRepository {
@@ -22,7 +13,9 @@ export class AuthRepository implements IAuthRepository {
       where: { email },
     });
 
-    if (!user) return null;
+    if (!user) {
+      return null;
+    }
 
     return this.mapToEntity(user);
   }
@@ -32,7 +25,9 @@ export class AuthRepository implements IAuthRepository {
       where: { id },
     });
 
-    if (!user) return null;
+    if (!user) {
+      return null;
+    }
 
     return this.mapToEntity(user);
   }
@@ -48,7 +43,9 @@ export class AuthRepository implements IAuthRepository {
       },
     });
 
-    if (!user) return null;
+    if (!user) {
+      return null;
+    }
 
     return this.mapToEntity(user);
   }
@@ -77,55 +74,15 @@ export class AuthRepository implements IAuthRepository {
         email: userData.email,
         name: userData.name,
         password: userData.password,
-        photoUrl: userData.photoUrl,
         role: userData.role,
         provider: userData.provider,
         providerId: userData.providerId,
+        photoUrl: userData.photoUrl,
         businessId: userData.businessId,
       },
     });
 
     return this.mapToEntity(updatedUser);
-  }
-
-  async createRefreshToken(
-    userId: number,
-    token: string,
-    expiresAt: Date,
-  ): Promise<void> {
-    await this.prisma.refreshToken.create({
-      data: {
-        token,
-        userId,
-        expiresAt,
-      },
-    });
-  }
-
-  async findRefreshToken(token: string): Promise<RefreshToken | null> {
-    const refreshToken = await this.prisma.refreshToken.findUnique({
-      where: { token },
-      include: { user: true },
-    });
-
-    if (!refreshToken) {
-      return null;
-    }
-
-    const refreshTokenWithUser = refreshToken as RefreshTokenWithUser;
-
-    return new RefreshToken({
-      token: refreshTokenWithUser.token,
-      userId: refreshTokenWithUser.userId,
-      expiresAt: refreshTokenWithUser.expiresAt,
-      user: this.mapToEntity(refreshTokenWithUser.user),
-    });
-  }
-
-  async deleteRefreshToken(token: string): Promise<void> {
-    await this.prisma.refreshToken.delete({
-      where: { token },
-    });
   }
 
   private mapToEntity(prismaUser: PrismaUser): User {

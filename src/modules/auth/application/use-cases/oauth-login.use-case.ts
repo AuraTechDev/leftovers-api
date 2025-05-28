@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthRepository } from '../../infrastructure/repositories/auth.repository';
 import { AuthResponseDto, UserDto } from '../dtos/auth-response.dto';
-import { randomBytes } from 'crypto';
 import { AuthUser } from '../../domain/interfaces/user.interface';
+import { env } from '../../../../config/env.config';
 
 @Injectable()
 export class OAuthLoginUseCase {
@@ -13,21 +13,19 @@ export class OAuthLoginUseCase {
   ) {}
 
   async execute(user: AuthUser): Promise<AuthResponseDto> {
-    const payload = {
+    const accessTokenPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
+      type: 'access',
     };
 
-    const refreshToken = this.generateRefreshToken();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await this.authRepository.createRefreshToken(
-      user.id,
-      refreshToken,
-      expiresAt,
-    );
+    const refreshTokenPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      type: 'refresh',
+    };
 
     const userDto: UserDto = {
       id: user.id,
@@ -39,14 +37,15 @@ export class OAuthLoginUseCase {
       businessId: user.businessId,
     };
 
-    return AuthResponseDto.create(
-      userDto,
-      this.jwtService.sign(payload),
-      refreshToken,
-    );
-  }
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(accessTokenPayload, {
+        expiresIn: env.JWT_EXPIRATION_TIME,
+      }),
+      this.jwtService.signAsync(refreshTokenPayload, {
+        expiresIn: env.JWT_REFRESH_EXPIRATION_TIME,
+      }),
+    ]);
 
-  private generateRefreshToken(): string {
-    return randomBytes(40).toString('hex');
+    return AuthResponseDto.create(userDto, accessToken, refreshToken);
   }
 }
