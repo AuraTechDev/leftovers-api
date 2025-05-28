@@ -1,16 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthRepository } from '../../infrastructure/repositories/auth.repository';
 import { AuthResponseDto, UserDto } from '../dtos/auth-response.dto';
 import { AuthUser } from '../../domain/interfaces/user.interface';
 import { env } from '../../../../config/env.config';
 
 @Injectable()
 export class OAuthLoginUseCase {
-  constructor(
-    private readonly authRepository: AuthRepository,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly jwtService: JwtService) {}
 
   async execute(user: AuthUser): Promise<AuthResponseDto> {
     const accessTokenPayload = {
